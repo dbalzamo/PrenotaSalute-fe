@@ -204,6 +204,18 @@
               <option value="MEDICO_CURANTE">Medico Curante</option>
             </select>
           </div>
+          @if (registerForm.get('ruolo')?.value === 'PAZIENTE') {
+            <div class="form__field">
+              <label for="reg-medico">Medico curante</label>
+              <select id="reg-medico" formControlName="medicoCuranteId" class="form__select">
+                <option [ngValue]="null">Nessuno (potrai associarlo dopo)</option>
+                @for (m of mediciCuranti(); track m.id) {
+                  <option [ngValue]="m.id">Dr. {{ m.nome }} {{ m.cognome }}</option>
+                }
+              </select>
+              <span class="form__hint">Seleziona il tuo medico curante dalla lista per poterlo contattare dalla Posta.</span>
+            </div>
+          }
           <div class="form__field" [class.form__field--hidden]="registerForm.get('ruolo')?.value !== 'MEDICO_CURANTE'">
             <label for="reg-specializzazione">Specializzazione</label>
             <input

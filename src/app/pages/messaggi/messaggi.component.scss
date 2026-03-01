@@ -75,6 +75,219 @@
   color: #6b7280;
 }
 
+.messaggi__loading,
+.messaggi__error,
+.messaggi__hint {
+  margin: 0;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.messaggi__loading {
+  color: #6b7280;
+}
+
+.messaggi__error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-radius: 8px;
+}
+
+.messaggi__hint {
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+.messaggi__select-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+
+  label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #374151;
+  }
+}
+
+.messaggi__select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+  background: #fff;
+
+  &:focus {
+    outline: none;
+    border-color: #1976d2;
+  }
+}
+
+.messaggi__select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+  background: #fff;
+
+  &:focus {
+    outline: none;
+    border-color: #1976d2;
+  }
+}
+
+/* Layout stile WhatsApp per medico: lista chat a sinistra, conversazione a destra */
+.messaggi__container {
+  display: flex;
+  gap: 0;
+  flex: 1;
+  min-height: 420px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.messaggi__sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+}
+
+.messaggi__sidebar-title {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.messaggi__chat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+  overflow-y: auto;
+}
+
+.messaggi__chat-list li {
+  margin: 0;
+}
+
+.messaggi__chat-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #111827;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+
+  &.messaggi__chat-item--active {
+    background: #e0e7ff;
+    color: #3730a3;
+    font-weight: 500;
+  }
+}
+
+.messaggi__chat-item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.messaggi__chat-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.messaggi__chat-item-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.messaggi__chat-preview-text {
+  font-size: 0.8rem;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.messaggi__chat-item--active .messaggi__chat-preview-text {
+  color: #4f46e5;
+}
+
+.messaggi__chat-preview-time {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.messaggi__chat-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messaggi__chat-badge {
+  flex-shrink: 0;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #1976d2;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.messaggi__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #fff;
+}
+
+.messaggi__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #6b7280;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
 .messaggi__thread {
   flex: 1;
   min-height: 260px;
@@ -166,6 +379,19 @@
 
   .messaggi {
     padding: 1rem;
+  }
+
+  .messaggi__container {
+    flex-direction: column;
+    min-height: 360px;
+  }
+
+  .messaggi__sidebar {
+    width: 100%;
+    min-width: unset;
+    max-height: 200px;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
   }
 
   .messaggi__composer {

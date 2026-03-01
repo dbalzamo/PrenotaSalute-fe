@@ -27,6 +27,7 @@ export interface SignupRequest {
   indirizzoDiResidenza: string;
   dataDiNascita: string;
   specializzazione?: string;
+  medicoCuranteId?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -70,6 +71,14 @@ export class AuthApiService {
 
   logout(): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/logout`, {}, { withCredentials: true });
+  }
+
+  /** Elenco medici curanti per selezione in registrazione (ruolo Paziente). Endpoint pubblico. */
+  getMediciCuranti(): Observable<{ id: number; nome: string; cognome: string }[]> {
+    return this.http.get<{ id: number; nome: string; cognome: string }[]>(
+      `${this.baseUrl}/medici-curanti`,
+      { withCredentials: true }
+    );
   }
 
   private extractErrorMessage(err: HttpErrorResponse): string {

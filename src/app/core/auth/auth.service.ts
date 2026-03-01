@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { tap, switchMap, of } from 'rxjs';
 import type { User, UserRole } from '../../models/user.model';
 import { AuthApiService, type LoginResponse, type SignupRequest } from '../api/auth-api.service';
+import { MessageApiService } from '../api/message-api.service';
 
 const STORAGE_KEY = 'prenota_salute_user';
 const TOKEN_KEY = 'prenota_salute_token';
@@ -25,10 +26,13 @@ export class AuthService {
   notificationItems = this.notificationsSignal.asReadonly();
   isAuthenticated = computed(() => this.currentUserSignal() !== null);
   notificationsCount = signal(0);
+  /** Conteggio messaggi non letti (Posta). Aggiornato con refreshMessagesUnreadCount(). */
+  messagesUnreadCount = signal(0);
 
   constructor(
     private router: Router,
-    private authApi: AuthApiService
+    private authApi: AuthApiService,
+    private messageApi: MessageApiService
   ) {}
 
   private loadFromStorage(): User | null {
@@ -141,6 +145,8 @@ export class AuthService {
     this.currentUserSignal.set(null);
     this.saveToStorage(null);
     this.clearToken();
+    this.notificationsCount.set(0);
+    this.messagesUnreadCount.set(0);
     this.router.navigate(['/login']);
   }
 
@@ -150,6 +156,11 @@ export class AuthService {
 
   private clearToken(): void {
     sessionStorage.removeItem(TOKEN_KEY);
+  }
+
+  /** Token JWT per richieste autenticate (es. WebSocket handshake). */
+  getToken(): string | null {
+    return sessionStorage.getItem(TOKEN_KEY);
   }
 
   getDashboardRoute(): string {
@@ -170,6 +181,19 @@ export class AuthService {
   clearNotifications(): void {
     this.notificationsSignal.set([]);
     this.notificationsCount.set(0);
+  }
+
+  /** Aggiorna il conteggio messaggi non letti (badge Posta). Chiamare dopo login, alla ricezione di un messaggio, o all'apertura della pagina Messaggi. */
+  refreshMessagesUnreadCount(): void {
+    const user = this.currentUserSignal();
+    if (!user?.id) {
+      this.messagesUnreadCount.set(0);
+      return;
+    }
+    this.messageApi.getUnreadCount(Number(user.id)).subscribe({
+      next: (count) => this.messagesUnreadCount.set(count),
+      error: () => this.messagesUnreadCount.set(0)
+    });
   }
 }
 

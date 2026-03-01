@@ -1,9 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import type { SignupRequest } from '../../core/api/auth-api.service';
+import { AuthApiService, type SignupRequest } from '../../core/api/auth-api.service';
 
 @Component({
   selector: 'app-login',
@@ -12,10 +12,11 @@ import type { SignupRequest } from '../../core/api/auth-api.service';
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   isLoginMode = signal(true);
   errorMessage = signal<string | null>(null);
   isLoading = signal(false);
+  mediciCuranti = signal<{ id: number; nome: string; cognome: string }[]>([]);
 
   loginForm: FormGroup;
   registerForm: FormGroup;
@@ -23,6 +24,7 @@ export class LoginComponent {
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
+    private authApi: AuthApiService,
     private router: Router
   ) {
     this.loginForm = this.fb.nonNullable.group({
@@ -41,7 +43,15 @@ export class LoginComponent {
       codiceFiscale: ['', [Validators.required, Validators.minLength(16), Validators.maxLength(16)]],
       indirizzoDiResidenza: ['', Validators.required],
       dataDiNascita: ['', Validators.required],
-      specializzazione: ['']
+      specializzazione: [''],
+      medicoCuranteId: [null as number | null]
+    });
+  }
+
+  ngOnInit(): void {
+    this.authApi.getMediciCuranti().subscribe({
+      next: list => this.mediciCuranti.set(list),
+      error: () => this.mediciCuranti.set([])
     });
   }
 
@@ -49,7 +59,7 @@ export class LoginComponent {
     this.isLoginMode.update(m => !m);
     this.errorMessage.set(null);
     this.loginForm.reset();
-    this.registerForm.reset({ ruolo: 'PAZIENTE' });
+    this.registerForm.reset({ ruolo: 'PAZIENTE', medicoCuranteId: null });
   }
 
   onSubmitLogin(): void {
@@ -107,7 +117,8 @@ export class LoginComponent {
       codiceFiscale: formValue.codiceFiscale.toUpperCase(),
       indirizzoDiResidenza: formValue.indirizzoDiResidenza,
       dataDiNascita: formValue.dataDiNascita,
-      specializzazione: formValue.specializzazione || undefined
+      specializzazione: formValue.specializzazione || undefined,
+      medicoCuranteId: formValue.medicoCuranteId ?? undefined
     };
 
     this.auth.register(signupRequest).subscribe({

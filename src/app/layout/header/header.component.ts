@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
+import { WebSocketMessageService } from '../../core/websocket/websocket-message.service';
 
 @Component({
   selector: 'app-header',
@@ -10,11 +12,29 @@ import { AuthService } from '../../core/auth/auth.service';
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit, OnDestroy {
   showNotifications = false;
   showProfileMenu = false;
+  private messageSub: Subscription | null = null;
 
-  constructor(protected auth: AuthService) {}
+  constructor(
+    protected auth: AuthService,
+    private wsService: WebSocketMessageService
+  ) {}
+
+  ngOnInit(): void {
+    if (this.auth.isAuthenticated()) {
+      this.auth.refreshMessagesUnreadCount();
+      this.wsService.connect(() => this.auth.getToken()).catch(() => {});
+      this.messageSub = this.wsService.onMessage.subscribe(() =>
+        this.auth.refreshMessagesUnreadCount()
+      );
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.messageSub?.unsubscribe();
+  }
 
   toggleNotifications(): void {
     this.showNotifications = !this.showNotifications;
