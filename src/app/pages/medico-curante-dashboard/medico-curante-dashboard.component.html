@@ -1,0 +1,425 @@
+<div class="dashboard">
+  <app-header />
+
+  <main class="dashboard__content">
+    <!-- Card riepilogative -->
+    <section class="summary-cards">
+      <div class="summary-card summary-card--pending">
+        <div class="summary-card__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+            <path d="M12 12h2v6h-2zm0-4h2v2h-2z"/>
+          </svg>
+        </div>
+        <div class="summary-card__content">
+          <span class="summary-card__label">In attesa oggi</span>
+          <span class="summary-card__value">{{ inAttesaOggi() }}</span>
+        </div>
+      </div>
+
+      <div class="summary-card summary-card--accepted">
+        <div class="summary-card__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/>
+          </svg>
+        </div>
+        <div class="summary-card__content">
+          <span class="summary-card__label">Accettate questa settimana</span>
+          <span class="summary-card__value">{{ accettateSettimana() }} richieste</span>
+        </div>
+      </div>
+
+      <div class="summary-card summary-card--urgent">
+        <div class="summary-card__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l6.9 3.45L12 11.09 5.1 7.63 12 4.18z"/>
+          </svg>
+        </div>
+        <div class="summary-card__content">
+          <span class="summary-card__label">Urgenti</span>
+          <span class="summary-card__value">{{ urgenti() }} richiesta</span>
+        </div>
+      </div>
+      <div class="summary-card summary-card--due">
+        <div class="summary-card__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 2h4v2h-4zM11 14h2v5h-2z"/>
+            <path d="M12 8c-2.76 0-5 2.24-5 5h2a3 3 0 1 1 3 3v2a5 5 0 0 0 0-10z"/>
+          </svg>
+        </div>
+        <div class="summary-card__content">
+          <span class="summary-card__label">In scadenza</span>
+          <span class="summary-card__value">{{ inScadenza() }}</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Banner richieste urgenti -->
+    <section class="doctor-banner">
+      <div class="doctor-banner__avatar">
+        <span class="doctor-banner__initials">{{ doctorInitials() }}</span>
+      </div>
+      <div class="doctor-banner__text">
+        <p class="doctor-banner__title">
+          <strong>Buongiorno Dottore</strong>, oggi ha
+          <button
+            type="button"
+            class="doctor-banner__link"
+            [disabled]="urgenti() === 0"
+          >
+            <span class="doctor-banner__count">
+              {{ urgenti() === 1 ? '1 richiesta urgente' : urgenti() + ' richieste urgenti' }}
+            </span>
+          </button>
+          da valutare.
+        </p>
+      </div>
+    </section>
+
+    <!-- Ricerca e filtri -->
+    <section class="filters">
+      <div class="search-bar">
+        <svg class="search-bar__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+        <input
+          type="search"
+          class="search-bar__input"
+          placeholder="Cerca per paziente, tipo o data"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+      </div>
+      <div class="filter-buttons">
+        <button
+          type="button"
+          class="filter-toggle"
+          (click)="toggleFilters()"
+          aria-haspopup="true"
+          [attr.aria-expanded]="showFilters()"
+        >
+          <svg class="filter-toggle__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 18h4v-2h-4v2zm-7-8v2h18v-2H3zm3-6v2h12V4H6z"/>
+          </svg>
+          <span>Filtri</span>
+        </button>
+      </div>
+    </section>
+
+    @if (showFilters()) {
+      <div class="filter-panel filter-panel--below" role="region" aria-label="Filtri">
+        @if (scelteAttive().length > 0) {
+          <div class="filter-scelte">
+            <span class="filter-scelte__label">Scelte:</span>
+            <div class="filter-scelte__chips">
+              @for (label of scelteAttive(); track label) {
+                <span class="filter-scelte__chip">{{ label }}</span>
+              }
+            </div>
+          </div>
+        }
+        <div class="filter-options">
+          <p class="filter-options__title">Stato richiesta</p>
+          <div class="filter-options__grid">
+            @for (opt of STATI_OPTIONS; track opt.value) {
+              <label
+                class="filter-chip"
+                [class.filter-chip--selected]="isStatoSelected(opt.value)"
+                (click)="toggleStato(opt.value); $event.preventDefault()"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="isStatoSelected(opt.value)"
+                  class="filter-chip__input"
+                  tabindex="-1"
+                />
+                <span class="filter-chip__text">{{ opt.label }}</span>
+              </label>
+            }
+          </div>
+        </div>
+        <div class="filter-options">
+          <p class="filter-options__title">Priorità</p>
+          <div class="filter-options__grid">
+            @for (opt of PRIORITA_OPTIONS; track opt.value) {
+              <label
+                class="filter-chip"
+                [class.filter-chip--selected]="isPrioritaSelected(opt.value)"
+                (click)="togglePriorita(opt.value); $event.preventDefault()"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="isPrioritaSelected(opt.value)"
+                  class="filter-chip__input"
+                  tabindex="-1"
+                />
+                <span class="filter-chip__text">{{ opt.label }}</span>
+              </label>
+            }
+          </div>
+        </div>
+        <div class="filter-options">
+          <p class="filter-options__title">Periodo</p>
+          <div class="filter-options__grid">
+            @for (opt of PERIODI_OPTIONS; track opt.value) {
+              <label
+                class="filter-chip filter-chip--single"
+                [class.filter-chip--selected]="periodFilter() === opt.value"
+                (click)="setPeriod(opt.value)"
+              >
+                <input
+                  type="radio"
+                  [name]="'periodo'"
+                  [value]="opt.value"
+                  [checked]="periodFilter() === opt.value"
+                  (change)="setPeriod(opt.value)"
+                  class="filter-chip__input"
+                />
+                <span class="filter-chip__text">{{ opt.label }}</span>
+              </label>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Lista richieste -->
+    <section class="richieste-section">
+      @if (loading()) {
+        <p class="richieste-loading">Caricamento richieste...</p>
+      }
+      @if (error(); as err) {
+        <div class="richieste-error">
+          <p>{{ err }}</p>
+          <button type="button" class="btn btn--primary" (click)="caricaRichieste()">Riprova</button>
+        </div>
+      }
+      @if (!loading() && !error()) {
+      <div class="richieste-header">
+        <h2 class="richieste-title">Richieste</h2>
+        <div class="richieste-controls">
+          <div class="view-toggle">
+            <button
+              type="button"
+              class="view-toggle__btn"
+              [class.view-toggle__btn--active]="viewMode() === 'list'"
+              (click)="viewMode.set('list')"
+              aria-label="Vista lista"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="view-toggle__btn"
+              [class.view-toggle__btn--active]="viewMode() === 'grid'"
+              (click)="viewMode.set('grid')"
+              aria-label="Vista griglia"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="richieste-list" [class.richieste-list--grid]="viewMode() === 'grid'">
+      @for (richiesta of richiestePaginata(); track richiesta.id) {
+          <article class="richiesta-card">
+            <div class="richiesta-card__patient">
+              <div class="richiesta-card__avatar">
+                {{ getIniziali(richiesta.paziente) }}
+              </div>
+              <div class="richiesta-card__info">
+                <span class="richiesta-card__name">{{ richiesta.paziente.nome }} {{ richiesta.paziente.cognome }}</span>
+                <span class="richiesta-card__type">{{ richiesta.tipo }}</span>
+              </div>
+            </div>
+            <div class="richiesta-card__meta">
+              @if (richiesta.priorita === 'URGENTE') {
+                <span class="pill pill--urgent">
+                  <span class="pill__dot"></span>
+                  Urgente
+                </span>
+              } @else if (richiesta.priorita === 'BREVE') {
+                <span class="pill pill--short">
+                  <span class="pill__dot"></span>
+                  Breve
+                </span>
+              } @else if (richiesta.priorita === 'DIFFERIBILE') {
+                <span class="pill pill--defer">
+                  <span class="pill__dot"></span>
+                  Differibile
+                </span>
+              }
+              <span
+                class="richiesta-card__stato"
+                [ngClass]="getStatoClass(richiesta.stato)"
+              >
+                {{ getStatoLabel(richiesta.stato) }}
+              </span>
+              <span class="richiesta-card__date">
+                {{ richiesta.dataRichiesta | date:'dd MMM yyyy' }}
+              </span>
+            </div>
+            <div class="richiesta-card__actions">
+              @if (richiesta.stato === 'INVIATA' || richiesta.stato === 'VISUALIZZATA') {
+                <button
+                  type="button"
+                  class="btn btn--accept"
+                  (click)="accetta(richiesta)"
+                  [disabled]="elaborazioneId() === richiesta.id"
+                >
+                  {{ elaborazioneId() === richiesta.id ? '...' : 'Accetta' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn--reject"
+                  (click)="apriModaleRifiuta(richiesta)"
+                  [disabled]="elaborazioneId() === richiesta.id"
+                >
+                  Rifiuta
+                </button>
+              }
+              <button
+                type="button"
+                class="btn btn--ghost"
+                (click)="visualizza(richiesta)"
+                [disabled]="elaborazioneId() === richiesta.id"
+              >
+                Dettagli
+              </button>
+            </div>
+          </article>
+        }
+        @empty {
+          <p class="richieste-empty">Nessuna richiesta trovata</p>
+        }
+      </div>
+      }
+      @if (richiesteFiltrate().length > pageSize) {
+        <div class="pagination">
+          <button
+            type="button"
+            class="pagination__button"
+            (click)="paginaPrecedente()"
+            [disabled]="paginaCorrente() === 1"
+          >
+            Precedente
+          </button>
+          <span class="pagination__info">
+            Pagina {{ paginaCorrente() }} di {{ pagineTotali() }}
+          </span>
+          <button
+            type="button"
+            class="pagination__button"
+            (click)="paginaSuccessiva()"
+            [disabled]="paginaCorrente() === pagineTotali()"
+          >
+            Successiva
+          </button>
+        </div>
+      }
+    </section>
+  </main>
+
+  <!-- Modale dettaglio richiesta -->
+  @if (richiestaSelezionata(); as richiesta) {
+    <div
+      class="modale-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modale-dettaglio-title-medico"
+      (click)="chiudiModale()"
+      tabindex="0"
+    >
+      <div class="modale modale--dettaglio" (click)="$event.stopPropagation()">
+        <div class="modale__header">
+          <h2 id="modale-dettaglio-title-medico" class="modale__title">Dettaglio richiesta</h2>
+          <button type="button" class="modale__close" (click)="chiudiModale()" aria-label="Chiudi">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modale__body modale__body--dettaglio">
+          <dl class="dettaglio-dl">
+            <div class="dettaglio-dl__row">
+              <dt>Paziente</dt>
+              <dd>{{ richiesta.paziente.nome }} {{ richiesta.paziente.cognome }}</dd>
+            </div>
+            <div class="dettaglio-dl__row">
+              <dt>Tipo richiesta</dt>
+              <dd>{{ richiesta.tipo }}</dd>
+            </div>
+            <div class="dettaglio-dl__row">
+              <dt>Stato</dt>
+              <dd>
+                <span class="dettaglio-stato" [ngClass]="getStatoClass(richiesta.stato)">
+                  <span class="stato-dot"></span>
+                  {{ getStatoLabel(richiesta.stato) }}
+                </span>
+              </dd>
+            </div>
+            <div class="dettaglio-dl__row">
+              <dt>Data richiesta</dt>
+              <dd>{{ richiesta.dataRichiesta | date:'dd/MM/yyyy HH:mm' }}</dd>
+            </div>
+            <div class="dettaglio-dl__row dettaglio-dl__row--messaggio">
+              <dt>Messaggio del paziente</dt>
+              <dd class="dettaglio-messaggio">{{ richiesta.descrizione || '—' }}</dd>
+            </div>
+          </dl>
+          <div class="modale__actions">
+            <button type="button" class="btn btn--secondary" (click)="chiudiModale()">Chiudi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modale rifiuta richiesta (motivazione) -->
+  @if (richiestaDaRifiutare(); as richiesta) {
+    <div class="modale-overlay" (click)="chiudiModaleRifiuta()" role="button" tabindex="0">
+      <div class="modale modale--rifiuta" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="modale-rifiuta-title" aria-modal="true">
+        <div class="modale__header">
+          <h2 id="modale-rifiuta-title" class="modale__title">Rifiuta richiesta</h2>
+          <button type="button" class="modale__close" (click)="chiudiModaleRifiuta()" aria-label="Chiudi">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modale__body">
+          <p class="modale__intro">Richiesta di <strong>{{ richiesta.paziente.nome }} {{ richiesta.paziente.cognome }}</strong> – {{ richiesta.tipo }}.</p>
+          <label class="modale__label" for="motivazione">Motivazione del rifiuto (obbligatoria)</label>
+          <textarea
+            id="motivazione"
+            class="modale__textarea"
+            rows="4"
+            placeholder="Inserisci la motivazione..."
+            [ngModel]="motivazioneRifiuto()"
+            (ngModelChange)="motivazioneRifiuto.set($event)"
+          ></textarea>
+          @if (messaggioErrore(); as err) {
+            <p class="modale__errore">{{ err }}</p>
+          }
+        </div>
+        <div class="modale__footer">
+          <button type="button" class="btn btn--secondary" (click)="chiudiModaleRifiuta()">Annulla</button>
+          <button
+            type="button"
+            class="btn btn--danger"
+            (click)="confermaRifiuto()"
+            [disabled]="!motivazioneRifiuto().trim() || elaborazioneId() === richiesta.id"
+          >
+            {{ elaborazioneId() === richiesta.id ? 'Invio...' : 'Conferma rifiuto' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

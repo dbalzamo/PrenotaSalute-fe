@@ -1,0 +1,99 @@
+<header class="header">
+  <div class="header__brand">
+    <a [routerLink]="auth.getDashboardRoute()" class="header__brand-link">
+      <div class="header__logo">
+        <img src="/logo.png" alt="PrenotaSalute - Logo" class="header__logo-img" />
+      </div>
+      <div class="header__title">
+        <span class="header__acronym">DSN</span>
+        <span class="header__subtitle">Dipartimento Sanitario Nazionale</span>
+      </div>
+    </a>
+  </div>
+  <div class="header__actions">
+    <a routerLink="/messaggi" class="header__mailbox">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 2-8 5-8-5h16zm0 12H4V9l8 5 8-5v9z"/>
+      </svg>
+      <span class="header__mailbox-label">Posta</span>
+    </a>
+    <div class="header__notification-wrapper">
+      <button type="button" class="header__notification" (click)="toggleNotifications()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 22c1.1 0 1.99-.9 1.99-2h-3.98A1.99 1.99 0 0 0 12 22zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-1.8 1.8A.5.5 0 0 0 4.5 19h15a.5.5 0 0 0 .3-.9z"/>
+        </svg>
+        <span class="header__notification-label">Notifiche</span>
+        <span class="header__notification-badge">{{ auth.notificationsCount() }}</span>
+      </button>
+      @if (showNotifications) {
+        <div class="header__notification-menu">
+          <p class="header__notification-title">Notifiche</p>
+          @if (auth.notificationsCount() === 0) {
+            <p class="header__notification-empty">
+              Non ci sono attualmente nuove notifiche.
+            </p>
+          } @else {
+            <ul class="header__notification-list">
+              @for (item of auth.notificationItems(); track item.id) {
+                <li class="header__notification-item">
+                  <div class="header__notification-pill" [ngClass]="'header__notification-pill--' + (item.priorita || 'DIFFERIBILE').toLowerCase()">
+                    <span class="header__notification-pill-acronym">
+                      {{ item.priorita === 'URGENTE' ? 'U' : item.priorita === 'BREVE' ? 'B' : 'D' }}
+                    </span>
+                  </div>
+                  <div class="header__notification-content">
+                    <div class="header__notification-row">
+                      <span class="header__notification-type">{{ item.tipo }}</span>
+                      <span class="header__notification-date">
+                        {{ item.data | date:'dd MMM yyyy, HH:mm' }}
+                      </span>
+                    </div>
+                    <p class="header__notification-text">
+                      {{ item.descrizione || ('Nuova richiesta da ' + item.paziente) }}
+                    </p>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+    <div class="header__profile-wrapper">
+      <button
+        type="button"
+        class="header__profile"
+        (click)="toggleProfileMenu()"
+        aria-haspopup="true"
+        [attr.aria-expanded]="showProfileMenu"
+      >
+        <div class="header__profile-avatar">
+          <span class="header__profile-initials">{{ profileInitials }}</span>
+        </div>
+        <span class="header__profile-label">Area personale</span>
+        <svg class="header__profile-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>
+        </svg>
+      </button>
+      @if (showProfileMenu) {
+        <div class="header__profile-menu" role="menu" aria-label="Area personale">
+          <a
+            routerLink="/area-personale"
+            class="header__profile-menu-item"
+            role="menuitem"
+          >
+            Dati personali
+          </a>
+          <button
+            type="button"
+            class="header__profile-menu-item header__profile-menu-item--danger"
+            role="menuitem"
+            (click)="auth.logout()"
+          >
+            Esci
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</header>

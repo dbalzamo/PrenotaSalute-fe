@@ -1,0 +1,51 @@
+<div class="dashboard">
+  <app-header />
+
+  <main class="dashboard__content">
+    <section class="messaggi">
+      <header class="messaggi__header">
+        <button type="button" class="messaggi__back" (click)="tornaIndietro()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+          </svg>
+          <span>Indietro</span>
+        </button>
+        <div class="messaggi__title-block">
+          <h1 class="messaggi__title">Casella di posta</h1>
+          <p class="messaggi__subtitle">Messaggia con il tuo medico curante</p>
+        </div>
+      </header>
+
+      <section class="messaggi__thread" aria-label="Conversazione con il medico curante">
+        <div class="messaggi__messages">
+          @for (m of conversazione(); track m.id) {
+            <div
+              class="messaggi__bubble"
+              [class.messaggi__bubble--me]="m.autore === 'paziente'"
+            >
+              <p class="messaggi__bubble-text">{{ m.testo }}</p>
+              <span class="messaggi__bubble-meta">
+                {{ m.autore === 'paziente' ? 'Tu' : 'Medico' }}
+              </span>
+            </div>
+          }
+        </div>
+      </section>
+
+      <form class="messaggi__composer" (ngSubmit)="invia()">
+        <textarea
+          class="messaggi__input"
+          rows="2"
+          placeholder="Scrivi un messaggio al tuo medico curante..."
+          [ngModel]="nuovoMessaggio()"
+          (ngModelChange)="nuovoMessaggio.set($event)"
+          name="messaggio"
+        ></textarea>
+        <button type="submit" class="messaggi__send-btn">
+          Invia
+        </button>
+      </form>
+    </section>
+  </main>
+</div>
+

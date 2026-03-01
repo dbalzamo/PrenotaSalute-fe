@@ -1,0 +1,394 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  height: 64px;
+  background: #1976d2;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header__brand-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.header__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+}
+
+.header__mailbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.15);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.25);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.header__mailbox-label {
+  font-size: 0.9rem;
+}
+
+.header__notification-wrapper {
+  position: relative;
+}
+
+.header__logout {
+  padding: 0.55rem 1.25rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.7);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
+  }
+}
+
+.header__logo {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.header__logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.header__title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+}
+
+.header__acronym {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.header__subtitle {
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  opacity: 0.98;
+}
+
+.header__notification {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.15);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.25);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.header__notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header__notification-label {
+  font-size: 0.9rem;
+}
+
+.header__profile-wrapper {
+  position: relative;
+}
+
+.header__profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.7rem 0.25rem 0.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.25);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #bfdbfe;
+    outline-offset: 2px;
+  }
+}
+
+.header__profile-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #0ea5e9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.header__profile-initials {
+  line-height: 1;
+}
+
+.header__profile-label {
+  font-size: 0.9rem;
+}
+
+.header__profile-chevron {
+  width: 16px;
+  height: 16px;
+}
+
+.header__notification-menu {
+  position: absolute;
+  right: 0;
+  top: 42px;
+  width: 260px;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+  font-size: 0.85rem;
+  z-index: 20;
+}
+
+.header__profile-menu {
+  position: absolute;
+  right: 0;
+  top: 46px;
+  min-width: 180px;
+  padding: 0.35rem 0.25rem;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+  font-size: 0.85rem;
+  z-index: 20;
+}
+
+.header__profile-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #111827;
+  font-size: 0.85rem;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+
+  &--danger {
+    color: #b91c1c;
+
+    &:hover {
+      background: #fee2e2;
+    }
+  }
+}
+
+.header__notification-title {
+  margin: 0 0 0.4rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.header__notification-empty {
+  margin: 0;
+  color: #6b7280;
+}
+
+.header__notification-list {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.header__notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.header__notification-pill {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #111827;
+
+  &--urgente {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  &--breve {
+    background: #fef3c7;
+    color: #b45309;
+  }
+
+  &--differibile {
+    background: #e0f2fe;
+    color: #0369a1;
+  }
+}
+
+.header__notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.header__notification-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  margin-bottom: 0.1rem;
+}
+
+.header__notification-type {
+  font-weight: 600;
+  color: #111827;
+}
+
+.header__notification-date {
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.header__notification-text {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #4b5563;
+  max-height: 2.4em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

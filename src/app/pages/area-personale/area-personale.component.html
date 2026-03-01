@@ -1,0 +1,128 @@
+<div class="area-personale">
+  <app-header />
+  <main class="area-personale__content">
+    <h1 class="area-personale__title">Area personale</h1>
+    <p class="area-personale__subtitle">I tuoi dati personali</p>
+
+    @if (profileError()) {
+      <div class="profile-error" role="alert">
+        {{ profileError() }}
+      </div>
+    }
+    @if (user(); as u) {
+      @if (profileLoading() && u.ruolo === 'Paziente') {
+        <p class="profile-loading">Caricamento profilo in corso…</p>
+      }
+      <section class="profile-card">
+        <div class="profile-card__header">
+          <h2 class="profile-card__heading">Profilo utente</h2>
+          @if (!isEditing()) {
+            <button type="button" class="btn btn--secondary btn--icon" (click)="startEdit()" aria-label="Modifica profilo">
+              <span>Modifica</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+              </svg>
+            </button>
+          } @else {
+            <div class="profile-card__actions">
+              <button type="button" class="btn btn--ghost" (click)="cancelEdit()" [disabled]="profileSaving()">Annulla</button>
+              <button type="button" class="btn btn--primary" (click)="saveProfile()" [disabled]="profileSaving()">
+                {{ profileSaving() ? 'Salvataggio…' : 'Salva' }}
+              </button>
+            </div>
+          }
+        </div>
+
+        @if (!isEditing()) {
+          <dl class="profile-dl">
+            <div class="profile-dl__row">
+              <dt>Nome</dt>
+              <dd>{{ u.nome || '—' }}</dd>
+            </div>
+            <div class="profile-dl__row">
+              <dt>Cognome</dt>
+              <dd>{{ u.cognome || '—' }}</dd>
+            </div>
+            <div class="profile-dl__row">
+              <dt>Email</dt>
+              <dd>{{ u.email }}</dd>
+            </div>
+            <div class="profile-dl__row">
+              <dt>Username</dt>
+              <dd>{{ u.username || u.email || '—' }}</dd>
+            </div>
+            <div class="profile-dl__row">
+              <dt>Ruolo</dt>
+              <dd>{{ u.ruolo === 'Medico_Curante' ? 'Medico curante' : 'Paziente' }}</dd>
+            </div>
+            <div class="profile-dl__row">
+              <dt>Codice fiscale</dt>
+              <dd>{{ u.codiceFiscale || '—' }}</dd>
+            </div>
+            <div class="profile-dl__row">
+              <dt>Indirizzo di residenza</dt>
+              <dd>{{ u.indirizzoDiResidenza || '—' }}</dd>
+            </div>
+            <div class="profile-dl__row">
+              <dt>Data di nascita</dt>
+              <dd>{{ u.dataDiNascita ? formatDate(u.dataDiNascita) : '—' }}</dd>
+            </div>
+            @if (u.ruolo === 'Medico_Curante') {
+              <div class="profile-dl__row">
+                <dt>Specializzazione</dt>
+                <dd>{{ u.specializzazione || '—' }}</dd>
+              </div>
+            }
+          </dl>
+        } @else {
+          <form class="profile-form" (ngSubmit)="saveProfile()">
+            <div class="profile-form__grid">
+              <label class="profile-form__label">
+                Nome
+                <input type="text" class="profile-form__input" [(ngModel)]="editForm.nome" name="nome" />
+              </label>
+              <label class="profile-form__label">
+                Cognome
+                <input type="text" class="profile-form__input" [(ngModel)]="editForm.cognome" name="cognome" />
+              </label>
+              <label class="profile-form__label profile-form__label--full">
+                Email
+                <input type="email" class="profile-form__input" [(ngModel)]="editForm.email" name="email" />
+              </label>
+              <label class="profile-form__label profile-form__label--full">
+                Codice fiscale
+                <input type="text" class="profile-form__input" [(ngModel)]="editForm.codiceFiscale" name="codiceFiscale" maxlength="16" placeholder="Es. RSSMRA85M01H501Z" />
+              </label>
+              <label class="profile-form__label profile-form__label--full">
+                Indirizzo di residenza
+                <input type="text" class="profile-form__input" [(ngModel)]="editForm.indirizzoDiResidenza" name="indirizzoDiResidenza" />
+              </label>
+              <label class="profile-form__label">
+                Data di nascita
+                <input type="date" class="profile-form__input" [(ngModel)]="editForm.dataDiNascita" name="dataDiNascita" />
+              </label>
+              @if (user()?.ruolo === 'Medico_Curante') {
+                <label class="profile-form__label profile-form__label--full">
+                  Specializzazione
+                  <input type="text" class="profile-form__input" [(ngModel)]="editForm.specializzazione" name="specializzazione" />
+                </label>
+              }
+            </div>
+            <div class="profile-form__actions">
+              <button type="button" class="btn btn--ghost" (click)="cancelEdit()" [disabled]="profileSaving()">Annulla</button>
+              <button type="submit" class="btn btn--primary" [disabled]="profileSaving()">
+                {{ profileSaving() ? 'Salvataggio…' : 'Salva modifiche' }}
+              </button>
+            </div>
+          </form>
+        }
+      </section>
+
+      <div class="area-personale__back">
+        <a [routerLink]="auth.getDashboardRoute()" class="back-link">← Torna alla dashboard</a>
+      </div>
+    } @else {
+      <p>Effettua l'accesso per vedere il tuo profilo.</p>
+    }
+  </main>
+</div>

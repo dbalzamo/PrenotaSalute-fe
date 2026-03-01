@@ -1,0 +1,233 @@
+<div class="login-page">
+  <!-- Sezione sinistra: Benvenuto -->
+  <section class="login-page__welcome">
+    <div class="welcome__logo">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="#4CAF50"/>
+        <path d="M12 4.18l6.9 3.45L12 11.09 5.1 7.63 12 4.18z" fill="#FFC107"/>
+        <path d="M4 8.82l7 3.5v7.36l-7-3.5V8.82z" fill="#F44336"/>
+      </svg>
+      <span class="logo-text">DSN</span>
+    </div>
+    <h1 class="welcome__title">Benvenuto nel portale DSN</h1>
+    <p class="welcome__desc">
+      Accedi alla tua area riservata per gestire le tue richieste sanitarie in modo facile e sicuro.
+    </p>
+    <p class="welcome__desc">
+      I tuoi dati sono protetti con i massimi standard di sicurezza.
+    </p>
+    <div class="welcome__graphics">
+      <div class="graphic graphic--shield">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+        </svg>
+      </div>
+      <div class="graphic graphic--laptop">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
+        </svg>
+      </div>
+      <div class="graphic graphic--heart">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sezione destra: Form -->
+  <section class="login-page__form-section">
+    <div class="form-card">
+      @if (isLoginMode()) {
+        <h2 class="form-card__title">Accedi al tuo account</h2>
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmitLogin()" class="form">
+          @if (errorMessage()) {
+            <div class="form__error">{{ errorMessage() }}</div>
+          }
+          <div class="form__field">
+            <label for="login-username">Email o username</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+              </svg>
+              <input
+                id="login-username"
+                type="text"
+                formControlName="username"
+                placeholder="Inserisci email o username"
+                class="form__input"
+              />
+            </div>
+            @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
+              <span class="form__hint">Campo obbligatorio</span>
+            }
+          </div>
+          <div class="form__field">
+            <label for="login-password">Password</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+              </svg>
+              <input
+                id="login-password"
+                type="password"
+                formControlName="password"
+                placeholder="Inserisci la tua password"
+                class="form__input"
+              />
+            </div>
+            <a href="#" class="form__link form__link--right" (click)="passwordDimenticata(); $event.preventDefault()">
+              Password dimenticata?
+            </a>
+          </div>
+          <button type="submit" class="form__submit" [disabled]="isLoading()">
+            {{ isLoading() ? 'Accesso in corso...' : 'Accedi' }}
+          </button>
+        </form>
+      } @else {
+        <h2 class="form-card__title">Registrati</h2>
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmitRegister()" class="form">
+          @if (errorMessage()) {
+            <div class="form__error">{{ errorMessage() }}</div>
+          }
+          <div class="form__row">
+            <div class="form__field">
+              <label for="reg-nome">Nome</label>
+              <input
+                id="reg-nome"
+                type="text"
+                formControlName="nome"
+                placeholder="Nome"
+                class="form__input form__input--simple"
+              />
+            </div>
+            <div class="form__field">
+              <label for="reg-cognome">Cognome</label>
+              <input
+                id="reg-cognome"
+                type="text"
+                formControlName="cognome"
+                placeholder="Cognome"
+                class="form__input form__input--simple"
+              />
+            </div>
+          </div>
+          <div class="form__field">
+            <label for="reg-username">Username</label>
+            <input
+              id="reg-username"
+              type="text"
+              formControlName="username"
+              placeholder="Username (min. 3 caratteri)"
+              class="form__input form__input--simple"
+            />
+          </div>
+          <div class="form__field">
+            <label for="reg-email">Email</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+              </svg>
+              <input
+                id="reg-email"
+                type="email"
+                formControlName="email"
+                placeholder="Inserisci la tua email"
+                class="form__input"
+              />
+            </div>
+          </div>
+          <div class="form__field">
+            <label for="reg-password">Password</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+              </svg>
+              <input
+                id="reg-password"
+                type="password"
+                formControlName="password"
+                placeholder="Minimo 6 caratteri"
+                class="form__input"
+              />
+            </div>
+          </div>
+          <div class="form__field">
+            <label for="reg-conferma">Conferma password</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+              </svg>
+              <input
+                id="reg-conferma"
+                type="password"
+                formControlName="confermaPassword"
+                placeholder="Ripeti la password"
+                class="form__input"
+              />
+            </div>
+          </div>
+          <div class="form__field">
+            <label for="reg-codiceFiscale">Codice fiscale</label>
+            <input
+              id="reg-codiceFiscale"
+              type="text"
+              formControlName="codiceFiscale"
+              placeholder="16 caratteri"
+              maxlength="16"
+              class="form__input form__input--simple"
+            />
+          </div>
+          <div class="form__field">
+            <label for="reg-indirizzo">Indirizzo di residenza</label>
+            <input
+              id="reg-indirizzo"
+              type="text"
+              formControlName="indirizzoDiResidenza"
+              placeholder="Via, numero, città"
+              class="form__input form__input--simple"
+            />
+          </div>
+          <div class="form__field">
+            <label for="reg-dataNascita">Data di nascita</label>
+            <input
+              id="reg-dataNascita"
+              type="date"
+              formControlName="dataDiNascita"
+              class="form__input form__input--simple"
+            />
+          </div>
+          <div class="form__field">
+            <label for="reg-ruolo">Registrati come</label>
+            <select id="reg-ruolo" formControlName="ruolo" class="form__select">
+              <option value="PAZIENTE">Paziente</option>
+              <option value="MEDICO_CURANTE">Medico Curante</option>
+            </select>
+          </div>
+          <div class="form__field" [class.form__field--hidden]="registerForm.get('ruolo')?.value !== 'MEDICO_CURANTE'">
+            <label for="reg-specializzazione">Specializzazione</label>
+            <input
+              id="reg-specializzazione"
+              type="text"
+              formControlName="specializzazione"
+              placeholder="Es. Cardiologia"
+              class="form__input form__input--simple"
+            />
+          </div>
+          <button type="submit" class="form__submit" [disabled]="isLoading()">
+            {{ isLoading() ? 'Registrazione...' : 'Registrati' }}
+          </button>
+        </form>
+      }
+
+      <div class="form-card__footer">
+        <button type="button" class="form__toggle" (click)="toggleMode()">
+          {{ isLoginMode() ? 'Non hai un account? Registrati' : 'Hai già un account? Accedi' }}
+        </button>
+        <a href="#" class="form__link form__link--center" (click)="haiBisognoAiuto(); $event.preventDefault()">
+          Hai bisogno di aiuto?
+        </a>
+      </div>
+    </div>
+  </section>
+</div>
