@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, HostListener } from '@angular/core';
+import { Component, computed, inject, signal, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import type { Richiesta, StatoRichiesta } from '../../models/richiesta.model';
@@ -13,10 +13,10 @@ import { AuthService, type NotificationItem } from '../../core/auth/auth.service
   templateUrl: './medico-curante-dashboard.component.html',
   styleUrl: './medico-curante-dashboard.component.scss'
 })
-export class MedicoCuranteDashboardComponent {
+export class MedicoCuranteDashboardComponent implements OnInit, OnDestroy {
   private richiestaApi = inject(RichiestaMedicaApiService);
   private auth = inject(AuthService);
-  private pollingHandle: any = null;
+  private pollingHandle: ReturnType<typeof setInterval> | null = null;
 
   /** Testo digitato nella barra di ricerca sopra la lista. */
   searchQuery = signal('');

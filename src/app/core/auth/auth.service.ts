@@ -178,11 +178,6 @@ export class AuthService {
     this.notificationsCount.set(items.length);
   }
 
-  clearNotifications(): void {
-    this.notificationsSignal.set([]);
-    this.notificationsCount.set(0);
-  }
-
   /** Aggiorna il conteggio messaggi non letti (badge Posta). Chiamare dopo login, alla ricezione di un messaggio, o all'apertura della pagina Messaggi. */
   refreshMessagesUnreadCount(): void {
     const user = this.currentUserSignal();

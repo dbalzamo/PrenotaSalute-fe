@@ -138,10 +138,10 @@ export class LoginComponent implements OnInit {
   }
 
   passwordDimenticata(): void {
-    console.log('Password dimenticata');
+    // TODO: recupero password
   }
 
   haiBisognoAiuto(): void {
-    console.log('Hai bisogno di aiuto');
+    // TODO: help/supporto
   }
 }
