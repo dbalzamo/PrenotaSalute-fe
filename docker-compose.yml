@@ -1,5 +1,4 @@
 services:
-
   frontend:
     image: dariobalzamo02/prenota-salute-fe:latest
     platform: linux/amd64
@@ -7,10 +6,5 @@ services:
     ports:
       - "4200:80"
     restart: unless-stopped
-    networks:
-      - prenotasalute-network
-
-networks:
-  prenotasalute-network:
-    external: true
-    name: prenotasalute-be_default
+    volumes:
+      - ./default.conf:/etc/nginx/conf.d/default.conf
