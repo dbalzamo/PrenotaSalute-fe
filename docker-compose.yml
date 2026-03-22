@@ -7,3 +7,10 @@ services:
     ports:
       - "4200:80"
     restart: unless-stopped
+    networks:
+      - prenotasalute-network
+
+networks:
+  prenotasalute-network:
+    external: true
+    name: prenotasalute-be_default
