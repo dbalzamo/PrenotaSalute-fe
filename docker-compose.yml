@@ -1,0 +1,9 @@
+services:
+
+  frontend:
+    image: dariobalzamo02/prenota-salute-fe:latest
+    platform: linux/amd64
+    container_name: prenotasalute-fe
+    ports:
+      - "4200:80"
+    restart: unless-stopped
