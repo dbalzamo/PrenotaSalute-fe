@@ -1,4 +1,5 @@
+// environment.ts (sviluppo)
 export const environment = {
   production: false,
-  apiUrl: '/prenotazione-medica'
+  apiUrl: 'http://localhost:8080/prenotazione-medica'
 };
