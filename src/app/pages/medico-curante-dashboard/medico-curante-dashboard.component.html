@@ -196,6 +196,8 @@
         </div>
       }
       @if (!loading() && !error()) {
+      <div class="richieste-layout">
+      <div class="richieste-layout__main">
       <div class="richieste-header">
         <h2 class="richieste-title">Richieste</h2>
         <div class="richieste-controls">
@@ -292,6 +294,34 @@
               >
                 Dettagli
               </button>
+              @if (richiesta.stato === 'ACCETTATA' && richiesta.impegnativaId == null) {
+                <button
+                  type="button"
+                  class="btn btn--impegnativa-icon"
+                  (click)="apriPannelloImpegnativa(richiesta)"
+                  [attr.aria-label]="'Genera impegnativa per richiesta ' + richiesta.id"
+                  title="Genera impegnativa"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
+                    <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-3-6h-2v2h-2v-2h-2v-2h2v-2h2v2h2v2z"/>
+                  </svg>
+                  <span>Impegnativa</span>
+                </button>
+              }
+              @if (richiesta.impegnativaId != null) {
+                <button
+                  type="button"
+                  class="btn btn--ghost btn--pdf-icon"
+                  (click)="scaricaPdfImpegnativa(richiesta.impegnativaId!)"
+                  title="Scarica PDF impegnativa"
+                  [attr.aria-label]="'Scarica PDF impegnativa ' + richiesta.impegnativaId"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
+                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                  </svg>
+                  PDF
+                </button>
+              }
             </div>
           </article>
         }
@@ -299,7 +329,6 @@
           <p class="richieste-empty">Nessuna richiesta trovata</p>
         }
       </div>
-      }
       @if (richiesteFiltrate().length > pageSize) {
         <div class="pagination">
           <button
@@ -322,6 +351,84 @@
             Successiva
           </button>
         </div>
+      }
+      </div>
+      @if (pannelloImpegnativaRichiesta(); as pr) {
+        <aside class="impegnativa-panel" aria-label="Generazione impegnativa">
+          <div class="impegnativa-panel__head">
+            <h3 class="impegnativa-panel__title">Impegnativa</h3>
+            <button type="button" class="impegnativa-panel__close" (click)="chiudiPannelloImpegnativa()" aria-label="Chiudi pannello">×</button>
+          </div>
+          <p class="impegnativa-panel__subtitle">
+            Richiesta #{{ pr.id }} — {{ pr.paziente.nome }} {{ pr.paziente.cognome }}
+          </p>
+          <dl class="impegnativa-panel__dl">
+            <div><dt>Tipo</dt><dd>{{ pr.tipo }}</dd></div>
+            <div><dt>Testo richiesta</dt><dd class="impegnativa-panel__desc">{{ pr.descrizione || '—' }}</dd></div>
+          </dl>
+          <p class="impegnativa-panel__hint">
+            I dati anagrafici, il codice NRE e il tipo ricetta sono completati dal sistema a partire dalla richiesta. Completa solo la prestazione.
+          </p>
+          @if (impegnativaMessaggio(); as okMsg) {
+            <p class="modale__successo">{{ okMsg }}</p>
+          } @else {
+            @if (impegnativaErrore(); as errImp) {
+              <p class="modale__errore" role="alert">{{ errImp }}</p>
+            }
+            <div class="impegnativa-panel__form">
+              <label class="modale__label">
+                Priorità prescrizione
+                <select class="modale__input" [(ngModel)]="formImpegnativa.priorita" name="prioritaPanel">
+                  @for (opt of prioritaOptions; track opt.value) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+              </label>
+              <label class="modale__label">
+                Codice prestazione
+                <input
+                  type="number"
+                  class="modale__input"
+                  [(ngModel)]="formImpegnativa.codicePrestazione"
+                  name="codicePrestazionePanel"
+                  min="1"
+                  placeholder="Es. 89021"
+                />
+              </label>
+              <label class="modale__label">
+                Quantità
+                <input
+                  type="number"
+                  class="modale__input"
+                  [(ngModel)]="formImpegnativa.quantita"
+                  name="quantitaPanel"
+                  min="1"
+                />
+              </label>
+              <label class="modale__label modale__label--full">
+                Descrizione prestazione (precompilata dalla richiesta)
+                <input type="text" class="modale__input" [(ngModel)]="formImpegnativa.descrizione" name="descPanel" />
+              </label>
+              <label class="modale__label modale__label--full">
+                Note (opzionale)
+                <input type="text" class="modale__input" [(ngModel)]="formImpegnativa.note" name="notePanel" />
+              </label>
+            </div>
+            <button
+              type="button"
+              class="btn btn--primary impegnativa-panel__cta"
+              (click)="confermaImpegnativa()"
+              [disabled]="impegnativaInvio()"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" aria-hidden="true">
+                <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-3-6h-2v2h-2v-2h-2v-2h2v-2h2v2h2v2z"/>
+              </svg>
+              {{ impegnativaInvio() ? 'Generazione…' : 'Genera impegnativa' }}
+            </button>
+          }
+        </aside>
+      }
+      </div>
       }
     </section>
   </main>

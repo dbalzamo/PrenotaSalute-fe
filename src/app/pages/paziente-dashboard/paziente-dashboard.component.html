@@ -61,6 +61,12 @@
           <button type="button" class="btn btn--ghost btn--sm" (click)="caricaRichieste()">Riprova</button>
         </div>
       }
+      @if (impegnativaPdfErrore(); as pdfErr) {
+        <div class="richieste-pdf-error" role="alert">
+          {{ pdfErr }}
+          <button type="button" class="btn btn--ghost btn--sm" (click)="impegnativaPdfErrore.set(null)">Chiudi</button>
+        </div>
+      }
       @if (richiesteLoading()) {
         <p class="richieste-loading">Caricamento richieste…</p>
       }
@@ -187,7 +193,7 @@
                 class="richiesta-card__stato"
                 [ngClass]="getStatoClass(richiesta.stato)"
               >
-                {{ getStatoLabel(richiesta.stato) }}
+                {{ getStatoLabel(richiesta.stato, richiesta.impegnativaId) }}
               </span>
               <span class="richiesta-card__date">
                 {{ formatDate(richiesta.dataRichiesta) }}
@@ -201,6 +207,20 @@
               >
                 Dettagli
               </button>
+              @if (richiesta.impegnativaId != null) {
+                <button
+                  type="button"
+                  class="btn btn--ghost btn--pdf-download"
+                  (click)="scaricaImpegnativaPdf(richiesta.impegnativaId!)"
+                  title="Scarica PDF impegnativa"
+                  [attr.aria-label]="'Scarica PDF impegnativa'"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
+                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                  </svg>
+                  PDF
+                </button>
+              }
             </div>
           </article>
         }
@@ -261,16 +281,25 @@
                 }
               </select>
             </label>
+            @if (medicoCuranteEtichetta(); as nomeMedico) {
+              <p class="modale__hint">
+                Medico curante: <strong>{{ nomeMedico }}</strong> (ID {{ medicoCuranteId() }})
+              </p>
+            } @else if (medicoCuranteAvviso()) {
+              <p class="modale__errore" role="alert">{{ medicoCuranteAvviso() }}</p>
+              <p class="modale__hint">
+                Puoi impostare il medico dall’<a routerLink="/area-personale" class="modale__link">area personale</a>.
+              </p>
+            }
             <label class="modale__label">
-              ID medico curante
+              ID medico curante (se diverso)
               <input
                 type="number"
                 class="modale__input"
                 [(ngModel)]="formRichiesta.idMedico"
                 name="idMedico"
                 min="1"
-                placeholder="Es. 1"
-                required
+                placeholder="Lasciare vuoto per usare il medico associato"
               />
             </label>
             <label class="modale__label modale__label--full">
@@ -345,7 +374,7 @@
               <dd>
                 <span class="dettaglio-stato" [ngClass]="getStatoClass(richiesta.stato)">
                   <span class="stato-dot"></span>
-                  {{ getStatoLabel(richiesta.stato) }}
+                  {{ getStatoLabel(richiesta.stato, richiesta.impegnativaId) }}
                 </span>
               </dd>
             </div>
@@ -354,6 +383,20 @@
               <dd class="dettaglio-messaggio">{{ richiesta.descrizione || '—' }}</dd>
             </div>
           </dl>
+          @if (richiesta.impegnativaId != null) {
+            <div class="modale__impegnativa-cta">
+              <button
+                type="button"
+                class="btn btn--primary btn--pdf-download"
+                (click)="scaricaImpegnativaPdf(richiesta.impegnativaId!)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
+                  <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                </svg>
+                Scarica impegnativa (PDF)
+              </button>
+            </div>
+          }
           <div class="modale__actions">
             <button type="button" class="btn btn--primary" (click)="chiudiDettaglioRichiesta()">
               Chiudi

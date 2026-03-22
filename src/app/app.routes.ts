@@ -39,13 +39,5 @@ export const routes: Routes = [
         m => m.AreaPersonaleComponent
       ),
     canActivate: [authGuard]
-  },
-  {
-    path: 'messaggi',
-    loadComponent: () =>
-      import('./pages/messaggi/messaggi.component').then(
-        m => m.MessaggiComponent
-      ),
-    canActivate: [authGuard]
   }
 ];

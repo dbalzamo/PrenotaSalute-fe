@@ -6,7 +6,7 @@
 // Sezione sinistra - Benvenuto
 .login-page__welcome {
   flex: 1;
-  background: linear-gradient(135deg, #42a5f5 0%, #1976d2 50%, #1565c0 100%);
+  background: linear-gradient(145deg, #1a4a6e 0%, #0f2840 42%, #0a1f33 100%);
   padding: 3rem 4rem;
   display: flex;
   flex-direction: column;
@@ -17,31 +17,35 @@
     content: '';
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0%, transparent 40%);
+    background-image: radial-gradient(circle at 18% 85%, rgba(255, 255, 255, 0.08) 0%, transparent 45%),
+      radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.06) 0%, transparent 38%);
     pointer-events: none;
   }
 }
 
-.welcome__logo {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 3rem;
+.welcome__brand {
+  margin-bottom: 2.5rem;
   position: relative;
   z-index: 1;
 }
 
-.logo-icon {
-  width: 40px;
-  height: 40px;
+.welcome__brand-surface {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  padding: 1rem 1.15rem;
+  background: linear-gradient(180deg, #f8fafb 0%, #eef2f4 100%);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+  border: 1px solid rgba(255, 255, 255, 0.55);
 }
 
-.logo-text {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: white;
-  letter-spacing: 0.05em;
+.welcome__brand-logo {
+  display: block;
+  width: auto;
+  max-width: min(100%, 13rem);
+  height: auto;
 }
 
 .welcome__title {

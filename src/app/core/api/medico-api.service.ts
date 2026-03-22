@@ -4,59 +4,44 @@ import { Observable, catchError, map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type { User } from '../../models/user.model';
 
-/** Risposta API GET /api/medico/me (modello MedicoCurante backend) */
+/** Risposta GET /api/v1/medici-curanti/me (MedicoCuranteDTO). */
 export interface MedicoProfiloResponse {
   id: number;
   nome: string;
   cognome: string;
   indirizzoDiResidenza: string;
-  dataDiNascita: string | number;
+  dataDiNascita: string;
   codiceFiscale: string;
   specializzazione?: string | null;
-  account?: { id: number; username: string; email: string };
+  email: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class MedicoApiService {
-  private readonly baseUrl = `${environment.apiUrl}/api/medico`;
+  private readonly baseUrl = `${environment.apiUrl}/api/v1/medici-curanti`;
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Recupera il profilo del medico curante corrente (account autenticato).
-   * Usa l'endpoint GET /api/medico/me che internamente usa findByAccountId.
-   */
   getProfilo(): Observable<{ success: true; data: Partial<User> } | { success: false; error: string }> {
-    return this.http
-      .get<MedicoProfiloResponse>(`${this.baseUrl}/me`, { withCredentials: true })
-      .pipe(
-        map(res => ({
-          success: true as const,
-          data: this.mapToUserProfile(res)
-        })),
-        catchError((err: HttpErrorResponse) =>
-          of({
-            success: false as const,
-            error: this.extractErrorMessage(err)
-          })
-        )
-      );
+    return this.http.get<MedicoProfiloResponse>(`${this.baseUrl}/me`, { withCredentials: true }).pipe(
+      map(res => ({
+        success: true as const,
+        data: this.mapToUserProfile(res)
+      })),
+      catchError((err: HttpErrorResponse) =>
+        of({ success: false as const, error: this.extractErrorMessage(err) })
+      )
+    );
   }
 
   private mapToUserProfile(res: MedicoProfiloResponse): Partial<User> {
-    const dataDiNascita =
-      typeof res.dataDiNascita === 'number'
-        ? new Date(res.dataDiNascita).toISOString().slice(0, 10)
-        : res.dataDiNascita;
-
     return {
       nome: res.nome,
       cognome: res.cognome,
-      email: res.account?.email ?? undefined,
-      username: res.account?.username ?? undefined,
+      email: res.email,
       codiceFiscale: res.codiceFiscale,
       indirizzoDiResidenza: res.indirizzoDiResidenza,
-      dataDiNascita: dataDiNascita || undefined,
+      dataDiNascita: res.dataDiNascita || undefined,
       specializzazione: res.specializzazione || undefined
     };
   }
@@ -68,4 +53,3 @@ export class MedicoApiService {
     return err.message || 'Si è verificato un errore';
   }
 }
-

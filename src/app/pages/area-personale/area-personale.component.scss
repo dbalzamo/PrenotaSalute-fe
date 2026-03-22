@@ -37,6 +37,38 @@
   font-size: 0.9rem;
 }
 
+.profile-error--inline {
+  padding: 0.5rem 0.75rem;
+  margin: 0 0 0.75rem;
+}
+
+.profile-success {
+  padding: 0.75rem 1rem;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 8px;
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+}
+
+.area-personale__medico-attuale {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  color: #424242;
+}
+
+.profile-card--medico {
+  margin-top: 0;
+}
+
+.profile-form__grid--medico {
+  margin-bottom: 1rem;
+}
+
+.profile-card--medico .btn {
+  margin-top: 0.25rem;
+}
+
 .profile-card {
   background: white;
   border-radius: 12px;
@@ -134,6 +166,63 @@
   align-items: center;
   gap: 0.75rem;
   padding-top: 0.5rem;
+}
+
+.profile-form--inline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+
+  @media (min-width: 560px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+
+    .profile-form__label--full {
+      flex: 1;
+      min-width: 200px;
+      margin-bottom: 0;
+    }
+  }
+}
+
+.area-personale__section-intro {
+  margin: 0 0 1.25rem;
+  font-size: 0.9rem;
+  color: #616161;
+  line-height: 1.45;
+}
+
+.profile-card--account {
+  .profile-card__heading {
+    margin-bottom: 0;
+  }
+}
+
+.account-block {
+  padding-top: 1.25rem;
+  margin-top: 1.25rem;
+  border-top: 1px solid #eee;
+
+  &:first-of-type {
+    padding-top: 0;
+    margin-top: 0;
+    border-top: none;
+  }
+}
+
+.account-block__title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.account-block--password {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
 }
 
 .btn {

@@ -11,17 +11,6 @@
     </a>
   </div>
   <div class="header__actions">
-    <div class="header__mailbox-wrapper">
-      <a routerLink="/messaggi" class="header__mailbox">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 2-8 5-8-5h16zm0 12H4V9l8 5 8-5v9z"/>
-        </svg>
-        <span class="header__mailbox-label">Posta</span>
-      </a>
-      @if (auth.messagesUnreadCount() > 0) {
-        <span class="header__mailbox-badge">{{ auth.messagesUnreadCount() }}</span>
-      }
-    </div>
     <div class="header__notification-wrapper">
       <button type="button" class="header__notification" (click)="toggleNotifications()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

@@ -4,18 +4,26 @@ import { Observable, catchError, map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type { User } from '../../models/user.model';
 
-/** Risposta API GET /api/paziente/me (modello Paziente backend) */
+/** Risposta GET /api/v1/pazienti/me (PazienteDTO). */
 export interface PazienteProfiloResponse {
   id: number;
   nome: string;
   cognome: string;
   indirizzoDiResidenza: string;
-  dataDiNascita: string | number; // ISO string o timestamp
+  dataDiNascita: string;
   codiceFiscale: string;
+  email: string;
+}
+
+/** Risposta GET /api/v1/pazienti/mio-medico. */
+export interface MedicoCuranteResponse {
+  id: number;
+  nome: string;
+  cognome: string;
   account?: { id: number; username: string; email: string };
 }
 
-/** Body per PUT /api/paziente/updatePaziente (PazienteDTO backend) */
+/** Body PUT /api/v1/pazienti/updatePaziente (PazienteDTO). */
 export interface PazienteUpdateDto {
   id?: number;
   nome: string;
@@ -28,15 +36,13 @@ export interface PazienteUpdateDto {
 
 @Injectable({ providedIn: 'root' })
 export class PazienteApiService {
-  private readonly baseUrl = `${environment.apiUrl}/api/paziente`;
+  private readonly baseUrl = `${environment.apiUrl}/api/v1/pazienti`;
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Aggiorna il paziente corrente (PUT /api/paziente/updatePaziente).
-   * L'id account è preso dal backend tramite SecurityUtils.getCurrentAccountId().
-   */
-  updatePaziente(dto: PazienteUpdateDto): Observable<{ success: true; message: string } | { success: false; error: string }> {
+  updatePaziente(
+    dto: PazienteUpdateDto
+  ): Observable<{ success: true; message: string } | { success: false; error: string }> {
     return this.http
       .put<string>(`${this.baseUrl}/updatePaziente`, dto, {
         withCredentials: true,
@@ -45,48 +51,66 @@ export class PazienteApiService {
       .pipe(
         map(message => ({ success: true as const, message: message as string })),
         catchError((err: HttpErrorResponse) =>
-          of({
-            success: false as const,
-            error: this.extractErrorMessage(err)
-          })
+          of({ success: false as const, error: this.extractErrorMessage(err) })
         )
       );
   }
 
-  /**
-   * Recupera il profilo del paziente corrente (account autenticato).
-   * Usa l'endpoint GET /api/paziente/me che internamente usa findByAccountId.
-   */
   getProfilo(): Observable<{ success: true; data: Partial<User> } | { success: false; error: string }> {
+    return this.http.get<PazienteProfiloResponse>(`${this.baseUrl}/me`, { withCredentials: true }).pipe(
+      map(res => ({
+        success: true as const,
+        data: this.mapToUserProfile(res)
+      })),
+      catchError((err: HttpErrorResponse) =>
+        of({ success: false as const, error: this.extractErrorMessage(err) })
+      )
+    );
+  }
+
+  getMioMedicoCurante(): Observable<
+    | { success: true; data: MedicoCuranteResponse | null }
+    | { success: false; error: string }
+  > {
+    return this.http.get<MedicoCuranteResponse | null>(`${this.baseUrl}/mio-medico`, { withCredentials: true }).pipe(
+      map(data =>
+        data == null
+          ? { success: true as const, data: null }
+          : { success: true as const, data }
+      ),
+      catchError((err: HttpErrorResponse) =>
+        of({
+          success: false as const,
+          error: err.status === 404 ? 'Nessun medico curante associato.' : this.extractErrorMessage(err)
+        })
+      )
+    );
+  }
+
+  setMioMedicoCurante(
+    medicoCuranteId: number
+  ): Observable<{ success: true } | { success: false; error: string }> {
     return this.http
-      .get<PazienteProfiloResponse>(`${this.baseUrl}/me`, { withCredentials: true })
+      .put<string>(`${this.baseUrl}/mio-medico`, { medicoCuranteId }, {
+        withCredentials: true,
+        responseType: 'text' as 'json'
+      })
       .pipe(
-        map(res => ({
-          success: true as const,
-          data: this.mapToUserProfile(res)
-        })),
+        map(() => ({ success: true as const })),
         catchError((err: HttpErrorResponse) =>
-          of({
-            success: false as const,
-            error: this.extractErrorMessage(err)
-          })
+          of({ success: false as const, error: this.extractErrorMessage(err) })
         )
       );
   }
 
   private mapToUserProfile(res: PazienteProfiloResponse): Partial<User> {
-    const dataDiNascita =
-      typeof res.dataDiNascita === 'number'
-        ? new Date(res.dataDiNascita).toISOString().slice(0, 10)
-        : res.dataDiNascita;
     return {
       nome: res.nome,
       cognome: res.cognome,
-      email: res.account?.email ?? undefined,
-      username: res.account?.username ?? undefined,
+      email: res.email,
       codiceFiscale: res.codiceFiscale,
       indirizzoDiResidenza: res.indirizzoDiResidenza,
-      dataDiNascita: dataDiNascita || undefined
+      dataDiNascita: res.dataDiNascita || undefined
     };
   }
 

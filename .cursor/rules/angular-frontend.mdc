@@ -1,0 +1,458 @@
+---
+description: "Regole Angular Enterprise — TypeScript strict, Standalone, Signals, RxJS"
+globs: ["**/*.ts", "**/*.html", "**/*.scss", "**/*.spec.ts"]
+alwaysApply: false
+---
+
+# 🎯 PRINCIPI FONDAMENTALI
+
+- **TypeScript strict sempre** — mai `any`, mai `!` non giustificato, tipi espliciti ovunque.
+- **Standalone Components** obbligatori — nessun `NgModule` (Angular 17+).
+- **OnPush** change detection su ogni componente — nessuna eccezione.
+- **Signals** per stato locale; **RxJS** per flussi asincroni e side effect.
+- **`inject()`** per le dipendenze — mai constructor injection.
+- **`async pipe`** nel template — mai `subscribe()` manuale nel componente.
+- **`takeUntilDestroyed()`** per gestire il ciclo di vita delle subscription.
+- **Lazy loading** obbligatorio per tutte le route feature.
+
+---
+
+# 🏗️ STRUTTURA PROGETTO
+
+```
+src/app/
+├── core/                      # Singleton: services, guards, interceptors
+│   ├── auth/                  # auth.service.ts, auth.guard.ts, token.interceptor.ts
+│   ├── http/                  # api.service.ts, error.interceptor.ts
+│   └── models/                # Modelli globali, enums, costanti
+├── shared/                    # Elementi riutilizzabili (no logica di business)
+│   ├── components/            # Componenti UI generici (button, modal, table)
+│   ├── pipes/                 # Pipe custom
+│   ├── directives/            # Direttive custom
+│   └── validators/            # Validator custom per Reactive Forms
+├── features/                  # Un modulo per dominio funzionale
+│   └── {feature}/
+│       ├── {feature}.routes.ts
+│       ├── components/        # Smart + Dumb components
+│       ├── services/          # Service specifici del dominio
+│       └── models/            # Interfacce e tipi del dominio
+└── layout/                    # Shell, navbar, sidebar, footer
+```
+
+### Regole struttura
+- `core/` — importato solo in `app.config.ts`, mai nelle feature.
+- `shared/` — zero logica di business, zero chiamate HTTP dirette.
+- `features/` — ogni feature è autonoma, comunica con le altre solo via `core/`.
+- Un service per dominio — non creare service generici con troppe responsabilità.
+
+---
+
+# 🧩 COMPONENT
+
+## Pattern Smart / Dumb (obbligatorio)
+
+**Smart component** — gestisce logica, stato e chiamate al service:
+```typescript
+@Component({
+  selector: 'app-user-list',
+  standalone: true,
+  imports: [UserTableComponent, SkeletonLoaderComponent, ErrorMessageComponent],
+  templateUrl: './user-list.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class UserListComponent {
+  private userService = inject(UserService);
+
+  users$ = this.userService.getAll();
+  loading = signal(false);
+  error = signal<string | null>(null);
+}
+```
+
+**Dumb component** — solo presentazione, zero logica, zero inject di service:
+```typescript
+@Component({
+  selector: 'app-user-table',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './user-table.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class UserTableComponent {
+  @Input({ required: true }) users!: User[];
+  @Output() userSelected = new EventEmitter<User>();
+  @Output() userDeleted = new EventEmitter<string>();
+}
+```
+
+## Template — regole
+
+```html
+<!-- ✅ async pipe — mai subscribe nel component -->
+@if (users$ | async; as users) {
+  <app-user-table [users]="users" (userSelected)="onSelect($event)" />
+} @else {
+  <app-skeleton-loader />
+}
+
+<!-- ✅ trackBy obbligatorio in ogni for -->
+@for (item of items; track item.id) {
+  <app-item-card [item]="item" />
+}
+
+<!-- ❌ logica complessa nel template — spostala nel component -->
+<!-- @if (user.age > 18 && user.role === 'ADMIN' && !user.archived) -->
+```
+
+---
+
+# ⚙️ SERVICE
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class UserService {
+  private http = inject(HttpClient);
+  private readonly BASE = '/api/v1/users';
+
+  /**
+   * Recupera la lista paginata degli utenti.
+   * @param params filtri opzionali
+   * @returns Observable con pagina di utenti
+   */
+  getAll(params?: UserFilters): Observable<Page<UserSummary>> {
+    return this.http.get<ApiResponse<Page<UserSummary>>>(this.BASE, {
+      params: toHttpParams(params)
+    }).pipe(
+      map(r => r.data),
+      catchError(handleHttpError)
+    );
+  }
+
+  /**
+   * Crea un nuovo utente.
+   * @param request dati del nuovo utente
+   * @returns Observable con utente creato
+   * @throws ApiError in caso di validazione fallita o conflitto
+   */
+  create(request: CreateUserRequest): Observable<UserDetail> {
+    return this.http.post<ApiResponse<UserDetail>>(this.BASE, request).pipe(
+      map(r => r.data),
+      catchError(handleHttpError)
+    );
+  }
+}
+```
+
+### Regole service
+- JSDoc su ogni metodo pubblico con `@param`, `@returns`, `@throws`.
+- Ogni service espone solo `Observable<T>` — mai dati raw o subscription interne.
+- Usa `handleHttpError` centralizzato — mai gestire gli errori HTTP inline.
+- `BASE_URL` come campo `private readonly` — mai stringa ripetuta.
+
+---
+
+# 📐 MODELLI TYPESCRIPT
+
+```typescript
+// ✅ Interfacce tipate — mai `any` o `object`
+export interface UserSummary {
+  id: string;           // UUID come string
+  email: string;
+  fullName: string;
+  role: UserRole;
+  createdAt: string;    // ISO 8601
+}
+
+export interface UserDetail extends UserSummary {
+  phone?: string;
+  lastLogin?: string;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  fullName: string;
+  password: string;
+  role: UserRole;
+}
+
+// Enum con valori stringa espliciti
+export enum UserRole {
+  ADMIN  = 'ADMIN',
+  EDITOR = 'EDITOR',
+  VIEWER = 'VIEWER'
+}
+
+// Response envelope — allineato al backend
+export interface ApiResponse<T> {
+  data: T;
+  timestamp: string;
+}
+
+// Paginazione — allineata a Spring Page<T>
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;       // pagina corrente (0-based)
+}
+```
+
+---
+
+# 📋 REACTIVE FORMS
+
+```typescript
+export class CreateUserComponent {
+  private fb = inject(FormBuilder);
+
+  form = this.fb.group({
+    email:    ['', [Validators.required, Validators.email]],
+    fullName: ['', [Validators.required, Validators.maxLength(100)]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
+    role:     [UserRole.VIEWER, Validators.required]
+  });
+
+  // Accessor tipati — mai form.get('campo') ripetuto nel template
+  get emailControl()    { return this.form.controls.email; }
+  get fullNameControl() { return this.form.controls.fullName; }
+
+  // Messaggi di errore centralizzati — mai logica nel template
+  getError(controlName: keyof typeof this.form.controls): string {
+    const ctrl = this.form.controls[controlName];
+    if (!ctrl.touched) return '';
+    if (ctrl.hasError('required'))  return 'Campo obbligatorio';
+    if (ctrl.hasError('email'))     return 'Email non valida';
+    if (ctrl.hasError('minlength')) return `Minimo ${ctrl.errors?.['minlength'].requiredLength} caratteri`;
+    return '';
+  }
+
+  onSubmit(): void {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    // dispatch / service call
+  }
+}
+```
+
+### Regole form
+- **Reactive Forms sempre** per form con più di 2 campi.
+- Template-driven (`ngModel`) solo per form con 1-2 campi banali.
+- Validators custom in `shared/validators/` — mai inline nel component.
+- Ogni campo ha il suo accessor tipato — mai `form.get('campo')` ripetuto nel template.
+- `markAllAsTouched()` prima di bloccare il submit — mostra tutti gli errori.
+
+---
+
+# 🔐 AUTH E SICUREZZA
+
+```typescript
+// Token Interceptor — aggiunge JWT a ogni chiamata
+export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  const token = authService.token();
+
+  const authReq = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+
+  return next(authReq).pipe(
+    catchError(error => {
+      if (error.status === 401) {
+        authService.logout();
+        router.navigate(['/login']);
+      }
+      return throwError(() => error);
+    })
+  );
+};
+
+// Auth Guard — functional
+export const authGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.isAuthenticated()
+    ? true
+    : router.createUrlTree(['/login']);
+};
+
+// Role Guard — factory
+export const roleGuard = (...roles: UserRole[]): CanActivateFn => () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return roles.includes(auth.currentUser()?.role as UserRole)
+    ? true
+    : router.createUrlTree(['/403']);
+};
+```
+
+### Regole sicurezza
+- **Mai dati sensibili** in `localStorage` o `sessionStorage` — usa memory store.
+- JWT conservato in memoria (`signal`) o `httpOnly cookie` — mai `localStorage`.
+- Ogni route protetta ha il suo guard dichiarato nel file `.routes.ts`.
+- Interceptor come **functional interceptor** (non classe) — Angular 17+.
+
+---
+
+# 🛣️ ROUTING E LAZY LOADING
+
+```typescript
+// app.routes.ts
+export const routes: Routes = [
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  {
+    path: 'login',
+    loadComponent: () => import('./features/auth/login/login.component')
+      .then(m => m.LoginComponent)
+  },
+  {
+    path: '',
+    canActivate: [authGuard],
+    loadChildren: () => import('./layout/shell.routes')
+      .then(m => m.SHELL_ROUTES)
+  }
+];
+
+// features/users/users.routes.ts
+export const USER_ROUTES: Routes = [
+  { path: '', component: UserListComponent },
+  { path: ':id', component: UserDetailComponent, canActivate: [roleGuard(UserRole.ADMIN)] },
+  { path: 'new', component: CreateUserComponent, canActivate: [roleGuard(UserRole.ADMIN)] }
+];
+```
+
+---
+
+# 🎨 STYLING — SCSS
+
+```scss
+// ✅ Variabili CSS custom — mai colori hardcoded
+:root {
+  --color-primary:    #1a56db;
+  --color-danger:     #e02424;
+  --color-success:    #057a55;
+  --color-text:       #111928;
+  --color-text-muted: #6b7280;
+  --color-bg:         #f9fafb;
+  --radius-md:        8px;
+  --spacing-unit:     8px;
+}
+
+// ✅ BEM per i selettori
+.user-card {
+  &__header { ... }
+  &__body   { ... }
+  &__footer { ... }
+  &--active { border-left: 3px solid var(--color-primary); }
+}
+
+// ✅ Encapsulation del componente — nessuno stile globale
+// ❌ Mai colori esadecimali hardcoded nel template o negli stili
+```
+
+### Regole styling
+- Variabili CSS in `:root` — mai valori hardcoded nei template o SCSS.
+- **BEM** per naming delle classi — `.block__element--modifier`.
+- Stili globali solo in `styles.scss` per reset e variabili root.
+- `ViewEncapsulation.None` è vietato salvo casi documentati esplicitamente.
+- Mobile-first sempre — breakpoint con variabili, mai valori px sparsi.
+
+---
+
+# 📋 LOGGING E GESTIONE ERRORI
+
+```typescript
+// Error interceptor centralizzato — shared/http/error.interceptor.ts
+export const errorInterceptor: HttpInterceptorFn = (req, next) => {
+  return next(req).pipe(
+    catchError((error: HttpErrorResponse) => {
+      const message = error.error?.message ?? 'Errore di rete. Riprova.';
+
+      // Notifica UX
+      inject(NotificationService).error(message);
+
+      // Log strutturato — mai console.log in produzione
+      if (!environment.production) {
+        console.error(`[HTTP ${error.status}] ${req.url}`, error);
+      }
+
+      return throwError(() => new ApiError(error.status, message, error.error?.code));
+    })
+  );
+};
+
+// Classe errore tipata
+export class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+    public readonly code?: string
+  ) {
+    super(message);
+  }
+}
+```
+
+---
+
+# ✅ TESTING
+
+- **Unit test** per ogni service e component smart con `TestBed` + `HttpClientTestingModule`.
+- **Naming**: `should_<risultato>_when_<condizione>()`.
+- `it` con `async/await` per observable — usa `firstValueFrom()`.
+- Mock dei service con `jasmine.createSpyObj()` o `jest.fn()`.
+- Coverage minima attesa: **80%** su `services/` e `smart components`.
+
+```typescript
+describe('UserService', () => {
+  let service: UserService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ imports: [HttpClientTestingModule] });
+    service = TestBed.inject(UserService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  it('should_returnUsers_when_getAllCalled', async () => {
+    const expected = [{ id: '1', email: 'test@test.com' }];
+    const result$ = firstValueFrom(service.getAll());
+
+    httpMock.expectOne('/api/v1/users').flush({ data: expected });
+    expect(await result$).toEqual(expected);
+  });
+});
+```
+
+---
+
+# 🚫 ANTI-PATTERN — MAI FARE
+
+```typescript
+// ❌ tipo any
+handleResponse(response: any) { }
+
+// ❌ subscribe manuale senza cleanup (memory leak)
+ngOnInit() { this.service.getAll().subscribe(d => this.data = d); }
+
+// ❌ constructor injection
+constructor(private service: UserService) { }
+
+// ❌ dati sensibili nello storage
+localStorage.setItem('user', JSON.stringify(user));
+
+// ❌ manipolazione diretta del DOM
+this.el.nativeElement.style.display = 'none';
+
+// ❌ logica complessa nel template
+// @if (u.age > 18 && u.role === 'ADMIN' && !u.archived && u.plan === 'PRO')
+
+// ❌ colori hardcoded
+// style="color: #1a56db"
+
+// ❌ NgModule (Angular 17+ usa standalone)
+@NgModule({ declarations: [...] })
+
+// ❌ Default change detection
+// changeDetection: ChangeDetectionStrategy.Default
+```

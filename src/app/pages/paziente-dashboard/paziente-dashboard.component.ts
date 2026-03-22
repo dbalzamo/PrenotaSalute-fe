@@ -1,21 +1,26 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import type { RichiestaPaziente, StatoRichiestaPaziente } from '../../models/richiesta.model';
 import { HeaderComponent } from '../../layout/header/header.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { RichiestaMedicaApiService, type TipoRichiesta } from '../../core/api/richiesta-medica-api.service';
+import { PazienteApiService } from '../../core/api/paziente-api.service';
+import { ImpegnativaApiService } from '../../core/api/impegnativa-api.service';
 
 @Component({
   selector: 'app-paziente-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, HeaderComponent],
+  imports: [CommonModule, FormsModule, HeaderComponent, RouterLink],
   templateUrl: './paziente-dashboard.component.html',
   styleUrl: './paziente-dashboard.component.scss'
 })
 export class PazienteDashboardComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly richiestaMedicaApi = inject(RichiestaMedicaApiService);
+  private readonly pazienteApi = inject(PazienteApiService);
+  private readonly impegnativaApi = inject(ImpegnativaApiService);
 
   /** Opzioni per tipo richiesta (ETipoRichiesta backend) */
   readonly tipiRichiesta: { value: TipoRichiesta; label: string }[] = [
@@ -82,9 +87,38 @@ export class PazienteDashboardComponent implements OnInit {
   richieste = signal<RichiestaPaziente[]>([]);
   richiesteLoading = signal(false);
   richiesteError = signal<string | null>(null);
+  /** Messaggio dopo tentativo fallito di download PDF impegnativa. */
+  impegnativaPdfErrore = signal<string | null>(null);
+
+  /** Id medico curante (entità MedicoCurante) per POST crea-richiesta. */
+  medicoCuranteId = signal<number | null>(null);
+  /** Etichetta letta da GET /api/v1/pazienti/mio-medico. */
+  medicoCuranteEtichetta = signal<string | null>(null);
+  medicoCuranteAvviso = signal<string | null>(null);
 
   ngOnInit(): void {
+    this.caricaMedicoCurante();
     this.caricaRichieste();
+  }
+
+  caricaMedicoCurante(): void {
+    this.medicoCuranteAvviso.set(null);
+    this.pazienteApi.getMioMedicoCurante().subscribe(res => {
+      if (res.success && res.data) {
+        this.medicoCuranteId.set(res.data.id);
+        this.medicoCuranteEtichetta.set(`${res.data.nome} ${res.data.cognome}`.trim());
+      } else if (res.success) {
+        this.medicoCuranteId.set(null);
+        this.medicoCuranteEtichetta.set(null);
+        this.medicoCuranteAvviso.set(
+          'Nessun medico curante associato. Impostalo dall’area personale per inviare richieste.'
+        );
+      } else {
+        this.medicoCuranteId.set(null);
+        this.medicoCuranteEtichetta.set(null);
+        this.medicoCuranteAvviso.set(res.error);
+      }
+    });
   }
 
   caricaRichieste(): void {
@@ -138,7 +172,17 @@ export class PazienteDashboardComponent implements OnInit {
     return result;
   });
 
-  getStatoLabel(stato: StatoRichiestaPaziente): string {
+  /**
+   * Etichetta stato in elenco e dettaglio.
+   * Per richieste accettate distingue l’attesa dell’impegnativa dalla disponibilità del PDF.
+   */
+  getStatoLabel(stato: StatoRichiestaPaziente, impegnativaId?: number | null): string {
+    if (stato === 'accettata') {
+      if (impegnativaId != null) {
+        return 'Accettata — impegnativa disponibile';
+      }
+      return 'Accettata — in attesa dell’impegnativa';
+    }
     const labels: Record<StatoRichiestaPaziente, string> = {
       in_attesa: 'In attesa',
       accettata: 'Accettata',
@@ -194,7 +238,7 @@ export class PazienteDashboardComponent implements OnInit {
     this.formRichiesta = {
       tipoRichiesta: 'VISITA',
       descrizione: '',
-      idMedico: null
+      idMedico: this.medicoCuranteId()
     };
     this.modaleNuovaRichiestaAperta.set(true);
   }
@@ -208,9 +252,11 @@ export class PazienteDashboardComponent implements OnInit {
   }
 
   inviaRichiestaMedica(): void {
-    const idMedico = this.formRichiesta.idMedico;
+    const idMedico = this.formRichiesta.idMedico ?? this.medicoCuranteId();
     if (idMedico == null || idMedico <= 0) {
-      this.modaleErrore.set('Inserisci l\'ID del medico curante.');
+      this.modaleErrore.set(
+        "Associa un medico curante dall'area personale oppure inserisci l'ID del medico curante."
+      );
       return;
     }
     if (!this.formRichiesta.descrizione?.trim()) {
@@ -251,5 +297,25 @@ export class PazienteDashboardComponent implements OnInit {
 
   chiudiDettaglioRichiesta(): void {
     this.richiestaSelezionata.set(null);
+  }
+
+  /**
+   * Scarica il PDF dell’impegnativa (solo dopo emissione da parte del medico).
+   */
+  scaricaImpegnativaPdf(impegnativaId: number): void {
+    this.impegnativaPdfErrore.set(null);
+    this.impegnativaApi.downloadPdf(impegnativaId).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `impegnativa-${impegnativaId}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.impegnativaPdfErrore.set('Impossibile scaricare il PDF. Riprova tra poco.');
+      }
+    });
   }
 }

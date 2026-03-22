@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { tap, switchMap, of } from 'rxjs';
 import type { User, UserRole } from '../../models/user.model';
 import { AuthApiService, type LoginResponse, type SignupRequest } from '../api/auth-api.service';
-import { MessageApiService } from '../api/message-api.service';
 
 const STORAGE_KEY = 'prenota_salute_user';
 const TOKEN_KEY = 'prenota_salute_token';
@@ -26,13 +25,10 @@ export class AuthService {
   notificationItems = this.notificationsSignal.asReadonly();
   isAuthenticated = computed(() => this.currentUserSignal() !== null);
   notificationsCount = signal(0);
-  /** Conteggio messaggi non letti (Posta). Aggiornato con refreshMessagesUnreadCount(). */
-  messagesUnreadCount = signal(0);
 
   constructor(
     private router: Router,
-    private authApi: AuthApiService,
-    private messageApi: MessageApiService
+    private authApi: AuthApiService
   ) {}
 
   private loadFromStorage(): User | null {
@@ -53,7 +49,7 @@ export class AuthService {
   }
 
   private mapRoleFromBackend(ruoli: string[]): UserRole {
-    if (ruoli?.some(r => r === 'ROLE_MEDICO_CURANTE')) {
+    if (ruoli?.some(r => r === 'ROLE_MEDICO_CURANTE' || r === 'MEDICO_CURANTE')) {
       return 'Medico_Curante';
     }
     return 'Paziente';
@@ -134,6 +130,26 @@ export class AuthService {
     this.saveToStorage(updated);
   }
 
+  /**
+   * Sostituisce JWT e campi account dopo cambio username (stesso payload del login).
+   * Mantiene nome/cognome e altri campi profilo già presenti in sessione.
+   */
+  refreshSessionAfterUsernameChange(data: LoginResponse): void {
+    const current = this.currentUserSignal();
+    if (!current) return;
+    this.setToken(data.token);
+    const ruolo = this.mapRoleFromBackend(data.ruoli || []);
+    const updated: User = {
+      ...current,
+      id: String(data.id),
+      username: data.username,
+      email: data.email,
+      ruolo
+    };
+    this.currentUserSignal.set(updated);
+    this.saveToStorage(updated);
+  }
+
   logout(): void {
     this.authApi.logout().subscribe({
       next: () => this.clearAndRedirect(),
@@ -146,7 +162,6 @@ export class AuthService {
     this.saveToStorage(null);
     this.clearToken();
     this.notificationsCount.set(0);
-    this.messagesUnreadCount.set(0);
     this.router.navigate(['/login']);
   }
 
@@ -158,7 +173,7 @@ export class AuthService {
     sessionStorage.removeItem(TOKEN_KEY);
   }
 
-  /** Token JWT per richieste autenticate (es. WebSocket handshake). */
+  /** Token JWT per richieste autenticate. */
   getToken(): string | null {
     return sessionStorage.getItem(TOKEN_KEY);
   }
@@ -177,18 +192,4 @@ export class AuthService {
     this.notificationsSignal.set(items);
     this.notificationsCount.set(items.length);
   }
-
-  /** Aggiorna il conteggio messaggi non letti (badge Posta). Chiamare dopo login, alla ricezione di un messaggio, o all'apertura della pagina Messaggi. */
-  refreshMessagesUnreadCount(): void {
-    const user = this.currentUserSignal();
-    if (!user?.id) {
-      this.messagesUnreadCount.set(0);
-      return;
-    }
-    this.messageApi.getUnreadCount(Number(user.id)).subscribe({
-      next: (count) => this.messagesUnreadCount.set(count),
-      error: () => this.messagesUnreadCount.set(0)
-    });
-  }
 }
-

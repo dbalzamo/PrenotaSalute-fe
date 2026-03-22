@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import type { Richiesta, StatoRichiesta } from '../../models/richiesta.model';
 import { HeaderComponent } from '../../layout/header/header.component';
 import { RichiestaMedicaApiService } from '../../core/api/richiesta-medica-api.service';
+import { ImpegnativaApiService, type PrioritaPrescrizione } from '../../core/api/impegnativa-api.service';
 import { AuthService, type NotificationItem } from '../../core/auth/auth.service';
 
 @Component({
@@ -15,6 +16,7 @@ import { AuthService, type NotificationItem } from '../../core/auth/auth.service
 })
 export class MedicoCuranteDashboardComponent implements OnInit, OnDestroy {
   private richiestaApi = inject(RichiestaMedicaApiService);
+  private impegnativaApi = inject(ImpegnativaApiService);
   private auth = inject(AuthService);
   private pollingHandle: ReturnType<typeof setInterval> | null = null;
 
@@ -63,6 +65,26 @@ export class MedicoCuranteDashboardComponent implements OnInit, OnDestroy {
   elaborazioneId = signal<string | null>(null);
   messaggioErrore = signal<string | null>(null);
 
+  /** Pannello affiancato: emissione impegnativa dopo accettazione (o da richiesta ACCETTATA senza impegnativa). */
+  pannelloImpegnativaRichiesta = signal<Richiesta | null>(null);
+  impegnativaInvio = signal(false);
+  impegnativaErrore = signal<string | null>(null);
+  impegnativaMessaggio = signal<string | null>(null);
+  formImpegnativa = {
+    priorita: 'U' as PrioritaPrescrizione,
+    codicePrestazione: null as number | null,
+    descrizione: '',
+    note: '',
+    quantita: 1
+  };
+
+  readonly prioritaOptions: { value: PrioritaPrescrizione; label: string }[] = [
+    { value: 'U', label: 'Urgente (U)' },
+    { value: 'B', label: 'Breve (B)' },
+    { value: 'D', label: 'Differibile (D)' },
+    { value: 'P', label: 'Programmata (P)' }
+  ];
+
   paginaCorrente = signal(1);
   readonly pageSize = 5;
 
@@ -90,7 +112,7 @@ export class MedicoCuranteDashboardComponent implements OnInit, OnDestroy {
     this.avviaPollingRichieste();
   }
 
-  caricaRichieste(): void {
+  caricaRichieste(apriPannelloDopoPerRichiestaId?: string): void {
     this.loading.set(true);
     this.error.set(null);
     this.richiestaApi.getRichiesteMedico().subscribe(result => {
@@ -98,6 +120,12 @@ export class MedicoCuranteDashboardComponent implements OnInit, OnDestroy {
       if (result.success) {
         this.richieste.set(result.data);
         this.aggiornaNotifiche();
+        if (apriPannelloDopoPerRichiestaId) {
+          const found = result.data.find(x => x.id === apriPannelloDopoPerRichiestaId);
+          if (found?.stato === 'ACCETTATA' && (found.impegnativaId == null || found.impegnativaId === undefined)) {
+            this.apriPannelloImpegnativa(found);
+          }
+        }
       } else {
         this.error.set(result.error);
         this.auth.setNotificationsCount(0);
@@ -242,11 +270,19 @@ export class MedicoCuranteDashboardComponent implements OnInit, OnDestroy {
   }
 
   getIniziali(paziente: { nome: string; cognome: string }): string {
-    return `${paziente.nome[0]}${paziente.cognome[0]}`.toUpperCase();
+    const n = (paziente.nome || '?').charAt(0);
+    const c = (paziente.cognome || '?').charAt(0);
+    return `${n}${c}`.toUpperCase();
   }
 
   visualizza(richiesta: Richiesta): void {
     this.richiestaSelezionata.set(richiesta);
+    if (richiesta.stato === 'INVIATA') {
+      this.richiestaApi.visualizzaRichiestaMedica(Number(richiesta.id)).subscribe({
+        next: () => this.caricaRichieste(),
+        error: () => {}
+      });
+    }
   }
 
   chiudiModale(): void {
@@ -255,7 +291,9 @@ export class MedicoCuranteDashboardComponent implements OnInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    if (this.richiestaSelezionata()) {
+    if (this.pannelloImpegnativaRichiesta()) {
+      this.chiudiPannelloImpegnativa();
+    } else if (this.richiestaSelezionata()) {
       this.chiudiModale();
     } else if (this.richiestaDaRifiutare()) {
       this.chiudiModaleRifiuta();
@@ -270,7 +308,7 @@ export class MedicoCuranteDashboardComponent implements OnInit, OnDestroy {
       this.elaborazioneId.set(null);
       if (result.success) {
         this.chiudiModale();
-        this.caricaRichieste();
+        this.caricaRichieste(richiesta.id);
       } else {
         this.messaggioErrore.set(result.error);
       }
@@ -372,6 +410,91 @@ export class MedicoCuranteDashboardComponent implements OnInit, OnDestroy {
     if (periodOpt) labels.push(periodOpt.label);
     return labels;
   });
+
+  /** Priorità suggerita dal tipo richiesta (il backend completa NRE, regione, tipo ricetta, legami). */
+  private defaultPrioritaDaTipo(codice?: string | null): PrioritaPrescrizione {
+    switch (codice) {
+      case 'FARMACO':
+        return 'U';
+      case 'ESAME':
+        return 'D';
+      default:
+        return 'B';
+    }
+  }
+
+  apriPannelloImpegnativa(richiesta: Richiesta): void {
+    this.impegnativaErrore.set(null);
+    this.impegnativaMessaggio.set(null);
+    const desc = (richiesta.descrizione ?? '').trim();
+    this.formImpegnativa = {
+      priorita: this.defaultPrioritaDaTipo(richiesta.tipoCodice),
+      codicePrestazione: null,
+      descrizione: desc.length > 255 ? desc.slice(0, 255) : desc,
+      note: '',
+      quantita: 1
+    };
+    this.pannelloImpegnativaRichiesta.set(richiesta);
+  }
+
+  chiudiPannelloImpegnativa(): void {
+    if (!this.impegnativaInvio()) {
+      this.pannelloImpegnativaRichiesta.set(null);
+      this.impegnativaErrore.set(null);
+      this.impegnativaMessaggio.set(null);
+    }
+  }
+
+  confermaImpegnativa(): void {
+    const richiesta = this.pannelloImpegnativaRichiesta();
+    const cod = this.formImpegnativa.codicePrestazione;
+    if (!richiesta || cod == null || cod <= 0 || this.formImpegnativa.quantita < 1) {
+      this.impegnativaErrore.set('Compila codice prestazione e quantità validi.');
+      return;
+    }
+    this.impegnativaErrore.set(null);
+    this.impegnativaInvio.set(true);
+    this.impegnativaApi
+      .generaImpegnativa({
+        idRichiestaMedica: Number(richiesta.id),
+        priorita: this.formImpegnativa.priorita,
+        prestazioneSanitariaDTO: {
+          codicePrestazione: cod,
+          descrizione: this.formImpegnativa.descrizione.trim() || undefined,
+          note: this.formImpegnativa.note.trim() || undefined,
+          quantita: this.formImpegnativa.quantita
+        }
+      })
+      .subscribe(result => {
+        this.impegnativaInvio.set(false);
+        if (result.success) {
+          this.impegnativaMessaggio.set(result.message);
+          this.caricaRichieste();
+          setTimeout(() => {
+            this.pannelloImpegnativaRichiesta.set(null);
+            this.impegnativaMessaggio.set(null);
+          }, 1400);
+        } else {
+          this.impegnativaErrore.set(result.error);
+        }
+      });
+  }
+
+  scaricaPdfImpegnativa(impegnativaId: number): void {
+    this.impegnativaApi.downloadPdf(impegnativaId).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `impegnativa-${impegnativaId}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.impegnativaErrore.set('Impossibile scaricare il PDF. Riprova.');
+      }
+    });
+  }
 
   ngOnDestroy(): void {
     if (this.pollingHandle) {

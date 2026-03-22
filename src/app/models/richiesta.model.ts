@@ -16,10 +16,14 @@ export type StatoRichiestaPaziente =
 export interface RichiestaPaziente {
   id: string;
   tipo: string;
+  /** Codice tipo backend (VISITA, ESAME, FARMACO). */
+  tipoCodice?: string;
   stato: StatoRichiestaPaziente;
   dataRichiesta: Date;
   /** Messaggio/descrizione inviata con la richiesta (se disponibile) */
   descrizione?: string;
+  /** Presente quando il medico ha emesso l'impegnativa (download PDF). */
+  impegnativaId?: number | null;
 }
 
 export interface Paziente {
@@ -33,6 +37,8 @@ export interface Richiesta {
   id: string;
   paziente: Paziente;
   tipo: string;
+  /** Codice tipo backend (VISITA, ESAME, FARMACO). */
+  tipoCodice?: string;
   stato: StatoRichiesta;
   urgente: boolean;
   dataRichiesta: Date;
@@ -40,4 +46,6 @@ export interface Richiesta {
   priorita?: 'URGENTE' | 'BREVE' | 'DIFFERIBILE';
   /** Messaggio/descrizione inviata dal paziente con la richiesta */
   descrizione?: string;
+  /** Id impegnativa se già emessa per questa richiesta. */
+  impegnativaId?: number | null;
 }

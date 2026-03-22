@@ -14,6 +14,8 @@ export interface LoginResponse {
   email: string;
   ruoli: string[];
   token: string;
+  /** Opzionale: es. messaggio server dopo cambio username */
+  message?: string;
 }
 
 export interface SignupRequest {
@@ -79,6 +81,35 @@ export class AuthApiService {
       `${this.baseUrl}/medici-curanti`,
       { withCredentials: true }
     );
+  }
+
+  changePassword(oldPassword: string, newPassword: string): Observable<{ success: true; message: string } | { success: false; error: string }> {
+    return this.http
+      .put<string>(`${this.baseUrl}/change-password`, { oldPassword, newPassword }, {
+        withCredentials: true,
+        responseType: 'text' as 'json'
+      })
+      .pipe(
+        map(message => ({ success: true as const, message: message as string })),
+        catchError((err: HttpErrorResponse) =>
+          of({ success: false as const, error: this.extractErrorMessage(err) })
+        )
+      );
+  }
+
+  changeUsername(
+    newUsername: string
+  ): Observable<{ success: true; data: LoginResponse } | { success: false; error: string }> {
+    return this.http
+      .put<LoginResponse>(`${this.baseUrl}/change-username`, { newUsername }, {
+        withCredentials: true
+      })
+      .pipe(
+        map(data => ({ success: true as const, data })),
+        catchError((err: HttpErrorResponse) =>
+          of({ success: false as const, error: this.extractErrorMessage(err) })
+        )
+      );
   }
 
   private extractErrorMessage(err: HttpErrorResponse): string {

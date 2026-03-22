@@ -10,7 +10,7 @@
       </div>
     }
     @if (user(); as u) {
-      @if (profileLoading() && u.ruolo === 'Paziente') {
+      @if (profileLoading() && (u.ruolo === 'Paziente' || u.ruolo === 'Medico_Curante')) {
         <p class="profile-loading">Caricamento profilo in corso…</p>
       }
       <section class="profile-card">
@@ -117,6 +117,135 @@
           </form>
         }
       </section>
+
+      <section class="profile-card profile-card--account" aria-labelledby="account-sicurezza-heading">
+        <h2 id="account-sicurezza-heading" class="profile-card__heading">Account e sicurezza</h2>
+        <p class="area-personale__section-intro">
+          Aggiorna lo username o la password usati per accedere. Dopo il cambio username la sessione viene rinnovata automaticamente con un nuovo token.
+        </p>
+
+        <div class="account-block">
+          <h3 class="account-block__title">Username</h3>
+          @if (accountUsernameSuccess(); as usOk) {
+            <p class="profile-success" role="status">{{ usOk }}</p>
+          }
+          @if (accountUsernameError(); as usErr) {
+            <p class="profile-error profile-error--inline" role="alert">{{ usErr }}</p>
+          }
+          <form class="profile-form profile-form--inline" (ngSubmit)="cambiaUsername()">
+            <label class="profile-form__label profile-form__label--full">
+              Nuovo username
+              <input
+                type="text"
+                class="profile-form__input"
+                name="newUsername"
+                [(ngModel)]="newUsername"
+                autocomplete="username"
+                minlength="3"
+                maxlength="50"
+                required
+              />
+            </label>
+            <button type="submit" class="btn btn--primary" [disabled]="accountUsernameSaving()">
+              {{ accountUsernameSaving() ? 'Salvataggio…' : 'Aggiorna username' }}
+            </button>
+          </form>
+        </div>
+
+        <div class="account-block account-block--password">
+          <h3 class="account-block__title">Password</h3>
+          @if (accountPasswordSuccess(); as pwOk) {
+            <p class="profile-success" role="status">{{ pwOk }}</p>
+          }
+          @if (accountPasswordError(); as pwErr) {
+            <p class="profile-error profile-error--inline" role="alert">{{ pwErr }}</p>
+          }
+          <form class="profile-form" (ngSubmit)="cambiaPassword()">
+            <div class="profile-form__grid">
+              <label class="profile-form__label profile-form__label--full">
+                Password attuale
+                <input
+                  type="password"
+                  class="profile-form__input"
+                  name="oldPassword"
+                  [(ngModel)]="passwordForm.oldPassword"
+                  autocomplete="current-password"
+                  required
+                />
+              </label>
+              <label class="profile-form__label profile-form__label--full">
+                Nuova password
+                <input
+                  type="password"
+                  class="profile-form__input"
+                  name="newPassword"
+                  [(ngModel)]="passwordForm.newPassword"
+                  autocomplete="new-password"
+                  minlength="6"
+                  required
+                />
+              </label>
+              <label class="profile-form__label profile-form__label--full">
+                Conferma nuova password
+                <input
+                  type="password"
+                  class="profile-form__input"
+                  name="confirmPassword"
+                  [(ngModel)]="passwordForm.confirmPassword"
+                  autocomplete="new-password"
+                  minlength="6"
+                  required
+                />
+              </label>
+            </div>
+            <button type="submit" class="btn btn--primary" [disabled]="accountPasswordSaving()">
+              {{ accountPasswordSaving() ? 'Salvataggio…' : 'Aggiorna password' }}
+            </button>
+          </form>
+        </div>
+      </section>
+
+      @if (u.ruolo === 'Paziente') {
+        <section class="profile-card profile-card--medico" aria-labelledby="medico-curante-heading">
+          <h2 id="medico-curante-heading" class="profile-card__heading">Medico curante</h2>
+          <p class="area-personale__medico-attuale">
+            @if (medicoCuranteNome(); as nome) {
+              Attuale: <strong>{{ nome }}</strong>
+            } @else {
+              Nessun medico associato. Seleziona dall’elenco e salva.
+            }
+          </p>
+          @if (medicoMessaggio(); as mm) {
+            <p class="profile-success" role="status">{{ mm }}</p>
+          }
+          @if (medicoErrore(); as me) {
+            <p class="profile-error profile-error--inline" role="alert">{{ me }}</p>
+          }
+          <div class="profile-form__grid profile-form__grid--medico">
+            <label class="profile-form__label profile-form__label--full">
+              Medico
+              <select
+                class="profile-form__input"
+                [(ngModel)]="medicoSelezionatoId"
+                name="medicoCuranteSel"
+              >
+                <option [ngValue]="null">— Seleziona —</option>
+                @for (m of mediciDisponibili(); track m.id) {
+                  <option [ngValue]="m.id">{{ m.nome }} {{ m.cognome }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <button
+            type="button"
+            class="btn btn--primary"
+            (click)="salvaMedicoCurante()"
+            [disabled]="medicoSalvataggio()"
+          >
+            {{ medicoSalvataggio() ? 'Salvataggio…' : 'Salva medico curante' }}
+          </button>
+        </section>
+      }
 
       <div class="area-personale__back">
         <a [routerLink]="auth.getDashboardRoute()" class="back-link">← Torna alla dashboard</a>
