@@ -1,4 +1,5 @@
+// environment.prod.ts (produzione/container)
 export const environment = {
   production: true,
-  apiUrl: '/prenotazione-medica'
+  apiUrl: 'http://localhost:8080/prenotazione-medica'
 };

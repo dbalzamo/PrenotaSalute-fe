@@ -6,3 +6,9 @@ services:
     ports:
       - "4200:80"
     restart: unless-stopped
+    networks:
+      - prenotasalute-be_default  # stessa network del backend
+
+networks:
+  prenotasalute-be_default:
+    external: true  # esiste già, creata dal docker-compose backend
